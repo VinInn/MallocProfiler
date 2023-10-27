@@ -1,4 +1,6 @@
 echo "standalone"
 ./simpleTest
+echo "instrumented"
+./simpleTestInstrumented
 echo "preloading"
 setenv LD_PRELOAD ../mallocProfiler.so ; ./simpleTest ; unsetenv LD_PRELOAD

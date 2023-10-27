@@ -1,1 +1,2 @@
 c++ -O3 simpleTest.cpp ../dummyMallocProfiler.o -o simpleTest
+c++ -O3 simpleTest.cpp ../mallocProfiler.o -o simpleTestInstrumented -lstdc++exp -ldl
