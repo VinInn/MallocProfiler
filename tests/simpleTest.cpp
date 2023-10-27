@@ -1,15 +1,14 @@
+#include "../include/mallocProfiler.h"
+
 #include<vector>
 
-
-extern
-void __attribute__((weak)) Hello();
-
-// void Hello(){}
 
 double dummy = 0;
 
 
 #include<cstdio>
+#include<iostream>
+#include<iomanip>
 
 template<typename T, int mode>
 void go(int size) {
@@ -22,8 +21,9 @@ void go(int size) {
 
   dummy +=v[5];
 
-  // if(Hello) 
-  Hello();
+  
+  mallocProfiler::dump(std::cout, mallocProfiler::SortBy::max, false);
+
 }
 
 
@@ -39,6 +39,9 @@ int main() {
 
   printf("START\n");
   fflush(stdout);
+
+
+  std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(true) << ' ' << mallocProfiler::active(false) << std::endl;
 
   go<int,0>(100);
   go<int,1>(1000);
