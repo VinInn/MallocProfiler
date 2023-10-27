@@ -1,0 +1,3 @@
+c++ -O3 -pthread -fPIC -shared -std=c++23 plugins/mallocProfiler.cc -lstdc++exp -o mallocProfiler.so -ldl -Iinclude
+c++ -O3 -pthread -fPIC -shared -std=c++23 src/dummy.cc -o dummyMallocProfiler.o -Iinclude
+c++ -c -O3 -pthread -fPIC  -std=c++23 plugins/mallocProfiler.cc -o mallocProfiler.o -Iinclude

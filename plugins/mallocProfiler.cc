@@ -1,8 +1,12 @@
 // compile with
-// c++ -O3 -pthread -fPIC -shared -std=c++23 mallocWrapper.cc -lstdc++exp -o mallocHook.so -ldl
+//  c++ -O3 -pthread -fPIC -shared -std=c++23 plugins/mallocProfiler.cc -lstdc++exp -o mallocProfiler.so -ldl -Iinclude
+
+#include "mallocProfiler.h"
+
 #include <cstdint>
 #include <dlfcn.h>
-#include <iostream>
+#include <unistd.h>
+
 #include<cassert>
 #include <unordered_map>
 #include<map>
@@ -20,6 +24,7 @@
 
 namespace {
 
+  using namespace  mallocProfiler;
 
   typedef std::thread Thread;
   typedef std::vector<std::thread> ThreadGroup;
@@ -36,7 +41,13 @@ namespace {
      return trace;
   }
 
+
+  bool globalActive = true;
+  bool beVerbose = true;
+
   thread_local bool doRecording = true;
+
+
 
 struct  Me {
 
@@ -57,7 +68,6 @@ struct  Me {
     }
   };
 
-   enum class SortBy {none, tot, live, max, ncalls};
    using TraceMap = std::unordered_map<std::string,One>;
    using TraceVector = std::vector<std::pair<std::string,One>>;
    using Us = std::vector<std::unique_ptr<Me>>;
@@ -66,12 +76,12 @@ struct  Me {
 
   Me() {
 //    setenv("LD_PRELOAD","", true);
-    std::cerr << "Recoding structure constructed in a thread " << std::endl;
+    if (beVerbose)std::cout << "Recoding structure constructed in a thread " << getpid() << std::endl;
   }
 
   ~Me() {
     doRecording = false;
-    std::cout << "MemStat " << ntot << ' ' << mtot << ' ' << mlive << ' ' << mmax <<' ' << memMap.size() << std::endl;
+    if (beVerbose) std::cout << "MemStat in " << getpid() << ":' "  << ntot << ' ' << mtot << ' ' << mlive << ' ' << mmax <<' ' << memMap.size() << std::endl;
     dump(std::cout,SortBy::max);
   }
 
@@ -158,7 +168,7 @@ struct  Me {
      if (here == e) continue;
      if (e->sub(p)) return;
     }
-    std::cout << "free not found " << p << std::endl;
+    if (beVerbose) std::cout << "free not found " << p << std::endl;
   }
 
 };
@@ -200,9 +210,10 @@ extern "C"
 
 void *dlopen(const char *filename, int flags) {
   if (!origDL) origDL = (dlopenSym)dlsym(RTLD_NEXT,"dlopen");
+  auto previous = doRecording;
   doRecording = false;
   auto p  = origDL(filename,flags);
-  doRecording = true;
+  doRecording = previous;
   return p;
 }
 
@@ -211,7 +222,7 @@ void *malloc(std::size_t size) {
   if (!origM) origM = (mallocSym)dlsym(RTLD_NEXT,"malloc");
   assert(origM);
   auto p  = origM(size); 
-  if (doRecording) {
+  if (doRecording&&globalActive) {
     doRecording = false;
     Me::me().add(p, size);
     doRecording = true;
@@ -223,7 +234,7 @@ void *aligned_alloc( size_t alignment, size_t size ) {
   if (!origA) origA = (aligned_allocSym)dlsym(RTLD_NEXT,"aligned_alloc");
   assert(origA);
   auto p  = origA(alignment, size);
-  if (doRecording) {
+  if (doRecording&&globalActive) {
     doRecording = false;
     Me::me().add(p, size);
     doRecording = true;
@@ -247,10 +258,37 @@ void free(void *ptr) {
 
 }
 
-void Hello() {
-  std::cout << "Hello" << std::endl;
-  doRecording = false;
-  Me::me().dump(std::cout, Me::SortBy::max);
-  doRecording = true;
-}
 
+namespace mallocProfiler {
+
+   bool loaded() {return true;}
+
+   bool active(bool allThreads) { return allThreads ? globalActive : doRecording;}
+
+   void activate(bool allThreads) {
+     if (allThreads) {
+       globalActive = true;
+     } else {
+      doRecording = true;
+    }
+   }
+   
+   void deactivate(bool allThreads) {
+     if (allThreads) {
+       globalActive = false;
+     } else {
+      doRecording = false;
+    }
+   }
+
+   void setVerbose(bool isVerbose) {beVerbose=true;}
+
+   std::ostream &  dump(std::ostream & out, SortBy mode, bool allThreads) {
+      auto previous = doRecording;
+      doRecording = false;
+      Me::me().dump(out, SortBy::max);
+      doRecording = previous;
+      return out;
+   }
+
+}
