@@ -256,12 +256,10 @@ void free(void *ptr) {
 }
 
 
-}
 
 
 typedef void  (*rfiSym)(const void *, struct object *,void *, void *);
 rfiSym origRFI = nullptr;
-
 void
 __register_frame_info_bases (const void *begin, struct object *ob,
                  void *tbase, void *dbase)
@@ -272,6 +270,24 @@ __register_frame_info_bases (const void *begin, struct object *ob,
  origRFI(begin,ob,tbase,dbase);
  globalActive = previous;
 }
+
+
+typedef void (*voidSym)();
+voidSym origRF = nullptr;
+void
+_ZN4llvm14RuntimeDyldELF16registerEHFramesEv()
+{
+ if(!origRF)  origRF = (voidSym)dlsym(RTLD_NEXT,"_ZN4llvm14RuntimeDyldELF16registerEHFramesEv");
+ bool previous = globalActive;
+ globalActive = false;
+ origRF();
+ globalActive = previous;
+}
+
+
+} // extern C
+
+
 
 
 namespace mallocProfiler {
