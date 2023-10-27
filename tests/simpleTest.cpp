@@ -27,6 +27,15 @@ void go(int size) {
 }
 
 
+struct Ex{ std::size_t s;};
+
+void testEx(std::vector<int*> & v, int n) {
+   v.push_back(new int(4));
+   if (v.size()>10) throw Ex{v.size()};
+}
+
+
+
 void recursive(std::vector<int*> & v, int n) {
   if (0==n) return;
   v.push_back(new int(4));
@@ -53,6 +62,20 @@ int main() {
   recursive(v,257);
 
   std::cout << v.size() << std::endl;
+
+  std::cout << "test exception" << std::endl;
+
+  try {
+     testEx(v,4);
+     std::cout << v.size() << std::endl;
+  }
+  catch (Ex & ex) {
+     std::cout << "catched " << ex.s << std::endl;
+  }
+
+
+  printf("THIS IS THE END\n");
+  fflush(stdout);
 
   return 0;
 }

@@ -259,6 +259,21 @@ void free(void *ptr) {
 }
 
 
+typedef void  (*rfiSym)(const void *, struct object *,void *, void *);
+rfiSym origRFI = nullptr;
+
+void
+__register_frame_info_bases (const void *begin, struct object *ob,
+                 void *tbase, void *dbase)
+{
+ if(!origRFI)  origRFI = (rfiSym)dlsym(RTLD_NEXT,"__register_frame_info_bases");
+ bool previous = globalActive;
+ globalActive = false;
+ origRFI(begin,ob,tbase,dbase);
+ globalActive = previous;
+}
+
+
 namespace mallocProfiler {
 
    bool loaded() {return true;}
