@@ -10,6 +10,10 @@ double dummy = 0;
 #include<iostream>
 #include<iomanip>
 
+// from libs
+void a(std::vector<int*>&v);
+
+
 template<typename T, int mode>
 void go(int size) {
 
@@ -73,6 +77,9 @@ int main() {
      std::cout << "catched " << ex.s << std::endl;
   }
 
+
+  std::cout << "calling libs" << std::endl;
+  a(v);
 
   printf("THIS IS THE END\n");
   fflush(stdout);
