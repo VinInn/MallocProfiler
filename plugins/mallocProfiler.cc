@@ -197,6 +197,7 @@ struct  Me {
 
   struct Banner {
     Banner() {
+      setenv("LD_PRELOAD","", true);
       printf("malloc wrapper loading\n");
       fflush(stdout);
       // origM = (mallocSym)dlsym(RTLD_NEXT,"malloc");
@@ -289,6 +290,16 @@ _ZN4llvm14RuntimeDyldELF16registerEHFramesEv()
  bool previous = globalActive;
  globalActive = false;
  origRF();
+ globalActive = previous;
+}
+
+voidSym oriCI = nullptr;
+void
+_ZN5TROOT15InitInterpreterEv() {
+ if(!oriCI)  oriCI = (voidSym)dlsym(RTLD_NEXT,"_ZN5TROOT15InitInterpreterEv");
+ bool previous = globalActive;
+ globalActive = false;
+ oriCI();
  globalActive = previous;
 }
 
