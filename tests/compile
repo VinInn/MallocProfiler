@@ -1,5 +1,5 @@
-c++ -std=c++23 -O -shared -fPIC chain.cc -DBLIB -o libB.so  -lstdc++exp -g
-c++ -std=c++23 -O -shared -fPIC chain.cc -DALIB -o libA.so libB.so  -g
+c++ -std=c++23 -O -shared -fPIC chain.cc -DBLIB -o libB.so  -lstdc++exp -g -Wl,-E -Wl,--hash-style=gnu -rdynamic -L-export-dynamic
+c++ -std=c++23 -O -shared -fPIC chain.cc -DALIB -o libA.so libB.so  -g -Wl,-E -Wl,--hash-style=gnu -rdynamic -L-export-dynamic
 
-c++ -std=c++23 -O3 simpleTest.cpp ../dummyMallocProfiler.o -o simpleTest  libA.so -g 
-c++ -std=c++23 -O3 simpleTest.cpp ../mallocProfiler.o -o simpleTestInstrumented -lstdc++exp -ldl libA.so -g
+c++ -std=c++23 -O3 simpleTest.cpp ../dummyMallocProfiler.o -o simpleTest  libA.so -g  -Wl,-E -Wl,--hash-style=gnu -rdynamic -L-export-dynamic
+c++ -std=c++23 -O3 simpleTest.cpp ../mallocProfiler.o -o simpleTestInstrumented -lstdc++exp -ldl libA.so -g -Wl,-E -Wl,--hash-style=gnu -rdynamic -L-export-dynamic

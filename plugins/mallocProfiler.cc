@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include<map>
 #include<vector>
+#include<algorithm>
 #include <memory>
 
 #include <mutex>
@@ -20,8 +21,11 @@
 
 #include <iostream>
 #include <string>
+#ifdef USE_BOOST
+#include <boost/stacktrace.hpp>
+#else
 #include <stacktrace>
-
+#endif
 namespace {
 
   using namespace  mallocProfiler;
@@ -37,7 +41,11 @@ namespace {
 
   std::string get_stacktrace() {
      std::string trace;
+#ifdef USE_BOOST 
+     for (auto & entry : boost::stacktrace::stacktrace() ) trace += entry.name() + '#';
+#else
      for (auto & entry : std::stacktrace::current() ) trace += entry.description() + '#';
+#endif
      return trace;
   }
 
@@ -76,7 +84,7 @@ struct  Me {
 
   Me() {
 //    setenv("LD_PRELOAD","", true);
-    if (beVerbose)std::cout << "Recoding structure constructed in a thread " << getpid() << std::endl;
+//    if (beVerbose)std::cout << "Recoding structure constructed in a thread " << getpid() << std::endl;
   }
 
   ~Me() {
@@ -282,6 +290,19 @@ _ZN4llvm14RuntimeDyldELF16registerEHFramesEv()
  globalActive = false;
  origRF();
  globalActive = previous;
+}
+
+
+
+typedef void  (*dlinitSym)(struct link_map *, int, char **, char **);
+dlinitSym oriDLI = nullptr;
+void
+_dl_init (struct link_map *main_map, int argc, char **argv, char **env) {
+  if(!oriDLI)  oriDLI = (dlinitSym)dlsym(RTLD_NEXT,"_dl_init");
+  bool previous = globalActive;
+  globalActive = false;
+  oriDLI(main_map,argc,argv,env);
+  globalActive = previous;
 }
 
 

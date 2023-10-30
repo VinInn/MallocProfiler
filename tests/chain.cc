@@ -12,11 +12,11 @@ void a(std::vector<int*>&v) {
 
 #ifdef BLIB
 #include <iostream>
-#include <stacktrace>
+//#include <stacktrace>
 void b(std::vector<int*>&v) { 
    std::cout << "in blib" << std::endl;
    v.push_back(new int(4));
-   std::cout << std::stacktrace::current() << std::endl;
+//   std::cout << std::stacktrace::current() << std::endl;
 }
 #endif
 
