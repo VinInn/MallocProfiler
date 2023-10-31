@@ -293,16 +293,50 @@ _ZN4llvm14RuntimeDyldELF16registerEHFramesEv()
  globalActive = previous;
 }
 
-voidSym oriCI = nullptr;
+
+/* does not work
+typedef struct TInterpreter *  (*CIsym)(void* , const char**);
+ CIsym oriCI = nullptr;
+ struct TInterpreter *  CreateInterpreter(void* shlibHandle, const char* argv[]) {
+  if(!oriCI)  oriCI = (CIsym)dlsym(RTLD_NEXT,"CreateInterpreter");
+  bool previous = globalActive;
+  globalActive = false;
+  printf("in CI wrapper\n");
+  fflush(stdout);
+  auto p =  (oriCI)(shlibHandle,argv);
+  globalActive = previous;
+  return p;
+ }
+*/
+
+
+// wrap TROOT::InitInterpreter
+typedef void (*RIISym)(struct TROOT *);
+RIISym oriII = nullptr;
 void
-_ZN5TROOT15InitInterpreterEv() {
- if(!oriCI)  oriCI = (voidSym)dlsym(RTLD_NEXT,"_ZN5TROOT15InitInterpreterEv");
+_ZN5TROOT15InitInterpreterEv(struct TROOT * ob) {
+ if(!oriII)  oriII = (RIISym)dlsym(RTLD_NEXT,"_ZN5TROOT15InitInterpreterEv");
  bool previous = globalActive;
  globalActive = false;
- oriCI();
+ printf("im II wrapper\n");
+ fflush(stdout);
+ oriII(ob);
  globalActive = previous;
 }
 
+typedef long * (*macroSym)(struct TROOT * ob,char const*, int*, bool);
+macroSym oriMacro = nullptr;
+long *
+_ZN5TROOT5MacroEPKcPib(struct TROOT * ob,const char *filename, int *error, bool padUpdate) {
+ if(!oriMacro)  oriMacro = (macroSym)dlsym(RTLD_NEXT,"_ZN5TROOT5MacroEPKcPib");
+ bool previous = globalActive;
+ globalActive = false;
+ printf("im Macro wrapper\n");
+ fflush(stdout);
+ auto p = oriMacro(ob,filename,error,padUpdate);
+ globalActive = previous;
+ return p;
+}
 
 
 typedef void  (*dlinitSym)(struct link_map *, int, char **, char **);
