@@ -56,6 +56,7 @@ namespace {
   thread_local bool doRecording = true;
 
 
+  std::size_t threshold = 1024;
 
 struct  Me {
 
@@ -100,6 +101,7 @@ struct  Me {
     mmax = std::max( mmax,mlive);
     ntot +=1;
     // std::cout << "m " << size << ' ' << p << std::endl;
+    if (size < threshold)  return; // fixme: add SamllAllocations fake symbol
     auto & e = calls[get_stacktrace()];
     memMap[p] = std::make_pair(size, &e);
     e.add(size);
