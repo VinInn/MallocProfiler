@@ -23,8 +23,10 @@
 #include <string>
 #ifdef USE_BOOST
 #include <boost/stacktrace.hpp>
+using stacktrace = boost::stacktrace::stacktrace;
 #else
 #include <stacktrace>
+using stacktrace = std::stacktrace;
 #endif
 namespace {
 
@@ -39,14 +41,31 @@ namespace {
 
   Mutex globalLock;
 
-  std::string get_stacktrace() {
+  std::string print_stacktrace(stacktrace const & st) {
      std::string trace;
+     Dl_info dlinfo;
 #ifdef USE_BOOST 
-     for (auto & entry : boost::stacktrace::stacktrace() ) trace += entry.name() + '#';
+     for (auto & entry : st ) trace += entry.name() + '#';
 #else
-     for (auto & entry : std::stacktrace::current() ) trace += entry.description() + '#';
+     for (auto & entry : st ) {
+      std::string name = entry.description();
+      if (name.empty()) { 
+        dladdr((const void*)(entry.native_handle()),&dlinfo);
+        if(dlinfo.dli_sname) name = dlinfo.dli_sname;
+      }
+      trace += name + '#';
+   }
 #endif
      return trace;
+  }
+
+
+  stacktrace get_stacktrace() {
+#ifdef USE_BOOST
+    return boost::stacktrace::stacktrace();
+#else
+    return std::stacktrace::current();
+#endif
   }
 
 
@@ -77,8 +96,9 @@ struct  Me {
     }
   };
 
-   using TraceMap = std::unordered_map<std::string,One>;
-   using TraceVector = std::vector<std::pair<std::string,One>>;
+   using TraceMap = std::map<stacktrace,One>;
+   // using TraceMap = std::unordered_map<stacktrace,One,std::hash<std::stacktrace>>;
+   using TraceVector = std::vector<std::pair<stacktrace,One>>;
    using Us = std::vector<std::unique_ptr<Me>>;
 
 
@@ -133,7 +153,7 @@ struct  Me {
        for ( auto const & e : calls) { v.emplace_back(e.first,e.second);  std::push_heap(v.begin(), v.end(),comp);}
      }
      std::sort_heap(v.begin(), v.end(),comp);
-     for ( auto const & e : v)  out << e.first << ' ' << e.second.ntot << ' ' << e.second.mtot << ' ' << e.second.mlive << ' ' << e.second.mmax << '\n';
+     for ( auto const & e : v)  out << print_stacktrace(e.first) << ' ' << e.second.ntot << ' ' << e.second.mtot << ' ' << e.second.mlive << ' ' << e.second.mmax << '\n';
      return out;
   }
 
