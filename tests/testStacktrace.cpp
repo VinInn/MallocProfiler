@@ -1,10 +1,12 @@
 //compile and run with either
 // c++ -std=c++23 testStacktrace.cpp -lstdc++exp -g -DINMAIN -DINLIB; ./a.out
 // c++ -std=c++23 testStacktrace.cpp -g -DINMAIN -DINLIB -DUSE_BOOST -ldl -I${BOOSTDIR}/include; ./a.out
-// c++ -std=c++23 testStacktrace.cpp -g -DINMAIN -DINLIB -DUSE_BOOST -DBOOST_STACKTRACE_USE_BACKTRACE -ldl -lbacktrace -I${BOOSTDIR}/include; ./a.out
+// c++ -std=c++23 testStacktrace.cpp -g -DINMAIN -DINLIB -DUSE_BOOST -DBOOST_STACKTRACE_USE_BACKTRACE -ldl -I${BOOSTDIR}/include -I/data/user/innocent/gcc_src/libbacktrace/ /data/user/innocent/gcc_build/libbacktrace/.libs/libbacktrace.a; ./a.out
 // or
 // c++ -std=c++23 testStacktrace.cpp -lstdc++exp -g -DINLIB -fpic -shared -o liba.so;c++ -std=c++23 testStacktrace.cpp -lstdc++exp -g -DINMAIN -L. -la -Wl,-rpath=.; ./a.out
-// c++ -std=c++23 testStacktrace.cpp -g -DINLIB -fpic -shared -o liba.so -ldl -I${BOOSTDIR}/include; c++ -std=c++23 testStacktrace.cpp -g -DINMAIN -L. -la -Wl,-rpath=.; ./a.outt
+// c++ -std=c++23 testStacktrace.cpp -g -DINLIB -fpic -shared -o liba.so -ldl -I${BOOSTDIR}/include -DUSE_BOOST; c++ -std=c++23 -DUSE_BOOST testStacktrace.cpp -g -DINMAIN -L. -la -Wl,-rpath=.; ./a.out
+// c++ -std=c++23 testStacktrace.cpp -g -DINLIB -fpic -shared -o liba.so -ldl -DUSE_BOOST -I${BOOSTDIR}/include -DBOOST_STACKTRACE_USE_BACKTRACE -I/data/user/innocent/gcc_src/libbacktrace/ /data/user/innocent/gcc_build/libbacktrace/.libs/libbacktrace.a; c++ -std=c++23 testStacktrace.cpp -g -DINMAIN -L. -la -Wl,-rpath=.; ./a.out
+//
 //
 #include <iostream>
 #ifndef USE_BOOST

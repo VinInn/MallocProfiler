@@ -340,6 +340,22 @@ _ZN5TROOT5MacroEPKcPib(struct TROOT * ob,const char *filename, int *error, bool 
  return p;
 }
 
+//wrap clang::DeclContext::LoadLexicalDeclsFromExternalStorage
+namespace clang{struct DeclContext;}
+typedef bool (*exsSym)(struct clang::DeclContext *);
+exsSym oriEXS = nullptr;
+bool 
+_ZNK5clang11DeclContext35LoadLexicalDeclsFromExternalStorageEv(struct clang::DeclContext * ob) {
+ if(!oriEXS)  oriEXS = (exsSym)dlsym(RTLD_NEXT,"_ZNK5clang11DeclContext35LoadLexicalDeclsFromExternalStorageEv");
+ bool previous = globalActive;
+ globalActive = false;
+ printf("im LoadLexicalDeclsFromExternalStorage wrapper\n");
+ fflush(stdout);
+ auto p = oriEXS(ob);
+ globalActive = previous;
+ return p;
+}
+
 
 typedef void  (*dlinitSym)(struct link_map *, int, char **, char **);
 dlinitSym oriDLI = nullptr;
@@ -351,6 +367,9 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env) {
   oriDLI(main_map,argc,argv,env);
   globalActive = previous;
 }
+
+
+
 
 
 } // extern C
