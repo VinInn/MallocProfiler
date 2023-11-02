@@ -28,6 +28,34 @@ using stacktrace = boost::stacktrace::stacktrace;
 #include <stacktrace>
 using stacktrace = std::stacktrace;
 #endif
+
+
+namespace __cxxabiv1
+{
+  extern "C" char*
+  __cxa_demangle(const char* mangled_name, char* output_buffer, size_t* length,
+                 int* status);
+}
+
+
+namespace
+{
+  char*
+  demangle(const char* name)
+  {
+    int status;
+    char* str = __cxxabiv1::__cxa_demangle(name, nullptr, nullptr, &status);
+    if (status == 0)
+      return str;
+    else
+      {
+           std::free(str);
+        return nullptr;
+      }
+  }
+}
+
+
 namespace {
 
   using namespace  mallocProfiler;
@@ -51,7 +79,11 @@ namespace {
       std::string name = entry.description();
       if (name.empty()) { 
         dladdr((const void*)(entry.native_handle()),&dlinfo);
-        if(dlinfo.dli_sname) name = dlinfo.dli_sname;
+        if(dlinfo.dli_sname) {
+          auto cstr = demangle(dlinfo.dli_sname);
+          if (cstr) name = cstr;
+          std::free(cstr);
+        }
       }
       trace += name + '#';
    }
