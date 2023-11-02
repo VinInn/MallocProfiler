@@ -107,7 +107,7 @@ namespace {
   thread_local bool doRecording = true;
 
 
-  std::size_t threshold = 1024;
+  std::size_t threshold = 0; // 1024;
 
 struct  Me {
 
