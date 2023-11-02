@@ -75,7 +75,9 @@ namespace {
 #ifdef USE_BOOST 
      for (auto & entry : st ) trace += entry.name() + '#';
 #else
-     for (auto & entry : st ) {
+     // reverse stack trace to fit flamegraph tool
+     for (auto p=st.rbegin(); p!=st.rend(); ++p ) {
+      auto entry = *p;
       std::string name = entry.description();
       if (name.empty()) { 
         dladdr((const void*)(entry.native_handle()),&dlinfo);
@@ -106,8 +108,8 @@ namespace {
 
   thread_local bool doRecording = true;
 
-
-  std::size_t threshold = 0; // 1024;
+  
+  std::size_t threshold = 1024;
 
 struct  Me {
 
@@ -128,8 +130,8 @@ struct  Me {
     }
   };
 
-   using TraceMap = std::map<stacktrace,One>;
-   // using TraceMap = std::unordered_map<stacktrace,One,std::hash<std::stacktrace>>;
+   // using TraceMap = std::map<stacktrace,One>;
+   using TraceMap = std::unordered_map<stacktrace,One>; // need fix in hash
    using TraceVector = std::vector<std::pair<stacktrace,One>>;
    using Us = std::vector<std::unique_ptr<Me>>;
 
@@ -254,18 +256,12 @@ struct  Me {
       setenv("LD_PRELOAD","", true);
       printf("malloc wrapper loading\n");
       fflush(stdout);
-      // origM = (mallocSym)dlsym(RTLD_NEXT,"malloc");
-      // origF = (freeSym)dlsym(RTLD_NEXT,"free");
     }
   };
 
   Banner banner;
 
 }
-
-// extern void *__libc_malloc(size_t size);
-// extern void __libc_free(void *);
-
 
 extern "C" 
 {
