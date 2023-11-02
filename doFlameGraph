@@ -1,0 +1,2 @@
+grep '\#malloc' step1Dump.log | sed 's/\#\{1,\}/;/g' | sed 's/^;malloc;//' | cut -f1,3 -d ' '> & trace1.txt
+
