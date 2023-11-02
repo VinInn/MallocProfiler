@@ -187,7 +187,7 @@ struct  Me {
        for ( auto const & e : calls) { v.emplace_back(e.first,e.second);  std::push_heap(v.begin(), v.end(),comp);}
      }
      std::sort_heap(v.begin(), v.end(),comp);
-     for ( auto const & e : v)  out << print_stacktrace(e.first) << " #" << e.second.ntot << '#' << e.second.mtot << '#' << e.second.mlive << '#' << e.second.mmax << '\n';
+     for ( auto const & e : v)  out << print_stacktrace(e.first) << " $" << e.second.ntot << '$' << e.second.mtot << '$' << e.second.mlive << '$' << e.second.mmax << '\n';
      return out;
   }
 
