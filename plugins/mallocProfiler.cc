@@ -105,6 +105,7 @@ namespace {
 
   bool globalActive = true;
   bool beVerbose = true;
+  bool doFinalDump = true;
 
   thread_local bool doRecording = true;
 
@@ -144,8 +145,8 @@ struct  Me {
 
   ~Me() {
     doRecording = false;
-    if (beVerbose) std::cout << "MemStat in " << getpid() << ":' "  << ntot << ' ' << mtot << ' ' << mlive << ' ' << mmax <<' ' << memMap.size() << std::endl;
-    dump(std::cout,SortBy::max);
+    if (beVerbose) std::cout << "MemStat Summary for " << getpid() << ": "  << ntot << ' ' << mtot << ' ' << mlive << ' ' << mmax <<' ' << memMap.size() << std::endl;
+    if (doFinalDump) dump(std::cout, '$', SortBy::max);
   }
 
   void add(void * p, std::size_t size) {
@@ -175,7 +176,7 @@ struct  Me {
   
   }
 
-  std::ostream & dump(std::ostream & out, SortBy sortMode) const {
+  std::ostream & dump(std::ostream & out, char sep, SortBy sortMode) const {
      using Elem = TraceVector::value_type;
      // auto comp = [](Elem const & a, Elem const & b) {return a.first < b.first;};
      auto comp = [](Elem const & a, Elem const & b) {return a.second.mmax < b.second.mmax;};
@@ -186,9 +187,9 @@ struct  Me {
        for ( auto const & e : calls) { v.emplace_back(e.first,e.second);  std::push_heap(v.begin(), v.end(),comp);}
      }
      std::sort_heap(v.begin(), v.end(),comp);
-     for ( auto const & e : v)  out << print_stacktrace(e.first) << " $" << e.second.ntot << '$' << e.second.mtot << '$' << e.second.mlive << '$' << e.second.mmax << '\n';
+     for ( auto const & e : v)  out << print_stacktrace(e.first) << ' ' << sep << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
      auto &  e = smallAllocations;
-     out << ";_start;SmallAllocations $" << e.ntot << '$' << e.mtot << '$' << e.mlive << '$' << e.mmax << '\n';
+     out << ";_start;SmallAllocations " << sep << e.ntot << sep << e.mtot << sep << e.mlive << sep << e.mmax << '\n';
      return out;
   }
 
@@ -362,6 +363,7 @@ typedef struct TInterpreter *  (*CIsym)(void* , const char**);
 */
 
 
+/*
 // wrap TROOT::InitInterpreter
 typedef void (*RIISym)(struct TROOT *);
 RIISym oriII = nullptr;
@@ -406,7 +408,9 @@ _ZNK5clang11DeclContext35LoadLexicalDeclsFromExternalStorageEv(struct clang::Dec
  return p;
 }
 
+*/
 
+/*
 typedef void  (*dlinitSym)(struct link_map *, int, char **, char **);
 dlinitSym oriDLI = nullptr;
 void
@@ -417,7 +421,7 @@ _dl_init (struct link_map *main_map, int argc, char **argv, char **env) {
   oriDLI(main_map,argc,argv,env);
   globalActive = previous;
 }
-
+*/
 
 
 
@@ -449,12 +453,16 @@ namespace mallocProfiler {
     }
    }
 
+   void setThreshold(std::size_t value){ threshold = value; }
+
+   void noFinalDump(){ doFinalDump=false;}
+
    void setVerbose(bool isVerbose) {beVerbose=true;}
 
-   std::ostream &  dump(std::ostream & out, SortBy mode, bool allThreads) {
+   std::ostream &  dump(std::ostream & out, char sep, SortBy mode, bool allThreads) {
       auto previous = doRecording;
       doRecording = false;
-      Me::me().dump(out, SortBy::max);
+      Me::me().dump(out, sep, SortBy::max);
       doRecording = previous;
       return out;
    }

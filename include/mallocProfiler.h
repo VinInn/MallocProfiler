@@ -13,8 +13,12 @@ namespace mallocProfiler {
    void activate(bool allThreads=true);
    void deactivate(bool allThreads=true);
 
+   void setThreshold(std::size_t value);
+
    void setVerbose(bool isVerbose);
 
-   std::ostream &  dump(std::ostream &, SortBy mode, bool allThreads);
+   void noFinalDump();
+
+   std::ostream &  dump(std::ostream &, char separator, SortBy mode, bool allThreads);
 
 }

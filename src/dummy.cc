@@ -8,8 +8,11 @@ namespace mallocProfiler {
 
    void activate(bool){}
    void deactivate(bool) {}
+   void setThreshold(std::size_t){}
 
-   void setVerbose(bool) {}
+   void setVerbose(bool){}
 
-   std::ostream &  dump(std::ostream & out, SortBy, bool) { return out;}
+   void noFinalDump(){}
+
+   std::ostream &  dump(std::ostream & out, char, SortBy, bool) { return out;}
 }

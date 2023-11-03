@@ -26,7 +26,7 @@ void go(int size) {
   dummy +=v[5];
 
   
-  mallocProfiler::dump(std::cout, mallocProfiler::SortBy::max, false);
+  mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max, false);
 
 }
 
