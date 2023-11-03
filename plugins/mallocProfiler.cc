@@ -155,8 +155,7 @@ struct  Me {
     mmax = std::max( mmax,mlive);
     ntot +=1;
     // std::cout << "m " << size << ' ' << p << std::endl;
-    if (size < threshold)  return; // fixme: add SamllAllocations fake symbol
-    auto & e = calls[get_stacktrace()];
+    auto & e = size < threshold ? smallAllocations : calls[get_stacktrace()];
     memMap[p] = std::make_pair(size, &e);
     e.add(size);
   }
@@ -188,6 +187,8 @@ struct  Me {
      }
      std::sort_heap(v.begin(), v.end(),comp);
      for ( auto const & e : v)  out << print_stacktrace(e.first) << " $" << e.second.ntot << '$' << e.second.mtot << '$' << e.second.mlive << '$' << e.second.mmax << '\n';
+     auto &  e = smallAllocations;
+     out << ";_start;SmallAllocations $" << e.ntot << '$' << e.mtot << '$' << e.mlive << '$' << e.mmax << '\n';
      return out;
   }
 
@@ -195,6 +196,7 @@ struct  Me {
   mutable Mutex lock;
   std::unordered_map<void*,std::pair<uint64_t,One*>> memMap; // active memory blocks 
   TraceMap calls;  // stat by stacktrace
+  One smallAllocations; 
   double mtot = 0;
   uint64_t mlive = 0;
   uint64_t mmax = 0;
