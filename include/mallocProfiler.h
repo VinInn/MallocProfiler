@@ -27,7 +27,7 @@ namespace mallocProfiler {
     void merge(Stat const & other) {
        mtot += other.mtot;
        mlive += other.mlive; 
-       mmax = std::max(mmax,other.mlive); // not correct use global
+       mmax = std::max(mmax,other.mmax); // not correct use global
        ntot += other.ntot;
     }
 

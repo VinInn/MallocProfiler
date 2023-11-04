@@ -172,22 +172,22 @@ struct  Me {
   }
 
 
-  static void loadTraceVector(TraceVector & v, SortBy sortMode, TraceMap const & calls, Mutex & lock) {
+  static void loadTraceVector(TraceVector & v, SortBy sortMode, TraceMap const & calls, Mutex & alock) {
      using Elem = TraceVector::value_type;
      // auto comp = [](Elem const & a, Elem const & b) {return a.first < b.first;};
      auto comp = [](Elem const & a, Elem const & b) {return a.second.mmax < b.second.mmax;};
      // if (sortMode == SortBy::live) comp = [](Elem const & a, Elem const & b) {return a.second.mlive < b.second.mlive;};
      v.reserve(calls.size());
      {
-       Lock guard(lock);
+       Lock guard(alock);
        for ( auto const & e : calls) { v.emplace_back(e.first,e.second);  std::push_heap(v.begin(), v.end(),comp);}
      }
      std::sort_heap(v.begin(), v.end(),comp);
   }
 
-  static std::ostream & dump(std::ostream & out, char sep, SortBy sortMode, TraceMap const & calls, One const & smallAlloc, Mutex & lock) {
+  static std::ostream & dump(std::ostream & out, char sep, SortBy sortMode, TraceMap const & calls, One const & smallAlloc, Mutex & alock) {
      TraceVector  v;
-     loadTraceVector(v, sortMode, calls, lock);
+     loadTraceVector(v, sortMode, calls, alock);
      for ( auto const & e : v)  out << print_stacktrace(e.first) << ' ' << sep << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
      auto &  e = smallAlloc;
      out << ";_start;SmallAllocations " << sep << e.ntot << sep << e.mtot << sep << e.mlive << sep << e.mmax << '\n';
@@ -246,6 +246,9 @@ struct  Me {
 
   static std::ostream & globalDump(std::ostream & out, char sep, SortBy sortMode) {
     // merge all stacktrace
+    auto previous = globalActive;
+    globalActive = false;
+    {
     TraceMap calls;
     One smallAlloc;
     std::vector<Me*> all;
@@ -255,8 +258,11 @@ struct  Me {
       for (auto & e : us() ) all.push_back(e.get());
     }
     for (auto e : all) e->mergeIn(calls,smallAlloc);
-    Mutex lock; // no need to lock
-    return  dump(out, sep, sortMode, calls, smallAlloc, lock);
+    Mutex alock; // no need to lock
+    dump(out, sep, sortMode, calls, smallAlloc, alock);
+    }
+    globalActive = previous;
+    return out;
   }
 
 
@@ -286,7 +292,7 @@ struct  Me {
       auto previous = globalActive;
       globalActive = false;
       std::cout << "MemStat Global Summary for " << getpid() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
-      globalActive = true;
+      globalActive = previous;
     }
   };
 
