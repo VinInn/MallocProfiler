@@ -112,27 +112,16 @@ namespace {
   
   std::size_t threshold = 1024;
 
+  AtomicStat globalStat;
+
 struct  Me {
 
-  struct One {
-    double mtot = 0;
-    uint64_t mlive = 0;
-    uint64_t mmax=0;
-    uint64_t ntot=0;
-
-    void add(std::size_t size) {
-       mtot += size;
-       mlive +=size;
-       mmax = std::max( mmax,mlive);
-       ntot +=1;
-    }
-    void sub(std::size_t size) {
-     mlive -=size;
-    }
-  };
-
-   // using TraceMap = std::map<stacktrace,One>;
+  using One = Stat;
+#ifdef USE_BOOST
+   using TraceMap = std::map<stacktrace,One>;
+#else
    using TraceMap = std::unordered_map<stacktrace,One>; // need fix in hash
+#endif
    using TraceVector = std::vector<std::pair<stacktrace,One>>;
    using Us = std::vector<std::unique_ptr<Me>>;
 
@@ -145,20 +134,17 @@ struct  Me {
 
   ~Me() {
     doRecording = false;
-    if (beVerbose) std::cout << "MemStat Summary for " << getpid() << ": "  << ntot << ' ' << mtot << ' ' << mlive << ' ' << mmax <<' ' << memMap.size() << std::endl;
+    if (beVerbose) std::cout << "MemStat Summary for " << getpid() << ':' << index << " : "  << stat.ntot << ' ' << stat.mtot << ' ' << stat.mlive << ' ' << stat.mmax <<' ' << memMap.size() <<' ' << calls.size() << std::endl;
     if (doFinalDump) dump(std::cout, '$', SortBy::max);
   }
 
   void add(void * p, std::size_t size) {
     Lock guard(lock);
-    mtot += size;
-    mlive +=size;
-    mmax = std::max( mmax,mlive);
-    ntot +=1;
-    // std::cout << "m " << size << ' ' << p << std::endl;
+    stat.add(size);
     auto & e = size < threshold ? smallAllocations : calls[get_stacktrace()];
     memMap[p] = std::make_pair(size, &e);
     e.add(size);
+    globalStat.add(size);
   }
 
   bool sub(void * p)  {
@@ -166,8 +152,9 @@ struct  Me {
     Lock guard(lock);
     // std::cout << "f " << p << std::endl;
     if (auto search = memMap.find(p); search != memMap.end()) {
-     mlive -= search->second.first;
+     stat.sub(search->second.first);
      search->second.second->sub(search->second.first);
+     globalStat.sub(search->second.first);
      memMap.erase(p);
      return true;
     } 
@@ -198,10 +185,8 @@ struct  Me {
   std::unordered_map<void*,std::pair<uint64_t,One*>> memMap; // active memory blocks 
   TraceMap calls;  // stat by stacktrace
   One smallAllocations; 
-  double mtot = 0;
-  uint64_t mlive = 0;
-  uint64_t mmax = 0;
-  uint64_t ntot=0;
+  One stat;
+  int64_t index=-1;
 
   static Us & us() {
    static Us us;
@@ -217,6 +202,7 @@ struct  Me {
     tlme = l.get();
     {
       Lock guard(globalLock);
+      tlme->index=us().size();
       us().push_back(std::move(l));
     }
     return *tlme;
@@ -259,6 +245,12 @@ struct  Me {
       setenv("LD_PRELOAD","", true);
       printf("malloc wrapper loading\n");
       fflush(stdout);
+    }
+    ~Banner() {
+      auto previous = globalActive;
+      globalActive = false;
+      std::cout << "MemStat Global Summary for " << getpid() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
+      globalActive = true;
     }
   };
 
@@ -309,9 +301,9 @@ void *aligned_alloc( size_t alignment, size_t size ) {
 void free(void *ptr) {
   if(!origF) origF = (freeSym)dlsym(RTLD_NEXT,"free");
   assert(origF);
-  if (doRecording) {
+  if (doRecording&&globalActive) {
     doRecording = false;
-    Me::me().sub(ptr);
+    if(!Me::me().sub(ptr)) Me::globalSub(ptr);
     doRecording = true;
   }
   origF(ptr);

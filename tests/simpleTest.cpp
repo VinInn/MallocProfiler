@@ -54,7 +54,7 @@ int main() {
   fflush(stdout);
 
 
-  std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(true) << ' ' << mallocProfiler::active(false) << std::endl;
+  std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(mallocProfiler::allThreads) << ' ' << mallocProfiler::active(mallocProfiler::currentThread) << std::endl;
 
   go<int,0>(100);
   go<int,1>(1000);
@@ -62,6 +62,7 @@ int main() {
 
   std::cout << std::endl;
 
+  {
   std::vector<int*> v;
   recursive(v,257);
 
@@ -80,6 +81,8 @@ int main() {
 
   std::cout << "calling libs" << std::endl;
   a(v);
+
+  }
 
   printf("THIS IS THE END\n");
   fflush(stdout);

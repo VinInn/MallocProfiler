@@ -1,3 +1,22 @@
 grep '\;_start' step3Dump.log | sed 's/\;\{1,\}/;/g' | sed 's/^;//' | cut -f1,3 -d'$' | tr '$' ' ' > & trace3.txt
 
-grep '\;_start' step3Dump.log | sed 's/\;\{1,\}/;/g' | sed 's/^;//' | sed 's/)\#/)/g' | cut -f1,3 -d'#' | tr '#' ' '
+
+sed 's/main::{lambda()#1}::operator()() const;tbb::detail::d1::task_arena_function<main::{lambda()#1}::operator()() const::{lambda()#1}, void>::operator()() const;//' \
+| sed 's/std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >/string/g' \
+| sed 's/std::basic_string_view<char, std::char_traits<char> >/string_view/g' \
+| sed 's/unsigned /u/g' | sed 's/operator/op/g' | sed 's/std:://g' | sed 's/const//g' | sed 's/&//g' | sed 's/ //g' | sed 's/::/:/g' 
+
+
+# candidate to be remangled to shorted file  (half size for CMSSW?)
+# all blanks
+# std::
+# std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >
+# std::basic_string_view<char, std::char_traits<char> >
+# main::{lambda()#1}::operator()() const;tbb::detail::d1::task_arena_function<main::{lambda()#1}::operator()() const::{lambda()#1}, void>::operator()() const;
+# std::vector<T, std::allocator<T> >
+#const
+#&
+#unsigned int 
+#unsigned long
+#operator
+# ::
