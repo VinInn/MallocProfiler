@@ -3,3 +3,5 @@ c++ -std=c++23 -O -shared -fPIC chain.cc -DALIB -o libA.so libB.so  -g -Wl,-rpat
 
 c++ -std=c++23 -O3 simpleTest.cpp ../dummyMallocProfiler.o -o simpleTest  libA.so -g  -Wl,-rpath=.
 c++ -std=c++23 -O3 simpleTest.cpp ../mallocProfiler.o -o simpleTestInstrumented -lstdc++exp -ldl libA.so -g -Wl,-rpath=.
+
+c++ -std=c++23 -O3 mtTest.cpp ../dummyMallocProfiler.o -o mtTest
