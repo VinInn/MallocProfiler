@@ -68,6 +68,13 @@ namespace {
   // typedef std::condition_variable Condition;
 
 
+
+  bool globalActive = true;
+  bool beVerbose = true;
+  bool doFinalDump = true;
+  bool doRemoveSignature = true;
+
+
   Mutex globalLock;
 
   std::string print_stacktrace(stacktrace const & st) {
@@ -88,6 +95,10 @@ namespace {
           std::free(cstr);
         }
       }
+      auto last = std::string::npos;
+      if (doRemoveSignature)  last = name.rfind('(');
+      name = name.substr(0,last);
+      // trace += name.substr(0,last) + ';';
       trace += name + ';';
    }
 #endif
@@ -104,12 +115,7 @@ namespace {
   }
 
 
-  bool globalActive = true;
-  bool beVerbose = true;
-  bool doFinalDump = true;
-
   thread_local bool doRecording = true;
-
   
   std::size_t threshold = 1024;
 
@@ -501,10 +507,10 @@ namespace mallocProfiler {
     } 
 
    std::ostream &  dump(std::ostream & out, char sep, SortBy mode, bool allThreads) {
-      if (allThreads) return Me::globalDump(out,sep,mode);
       auto previous = doRecording;
       doRecording = false;
-      Me::me().dump(out, sep, SortBy::max);
+      if (allThreads) Me::globalDump(out,sep,mode);
+      else Me::me().dump(out, sep, SortBy::max);
       doRecording = previous;
       return out;
    }
