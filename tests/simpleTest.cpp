@@ -84,6 +84,11 @@ int main() {
 
   }
 
+  std::cout << "=== Global Profile ===" << std::endl;
+  mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max,  mallocProfiler::allThreads);
+  std::cout << "===                ===" << std::endl;
+
+
   printf("THIS IS THE END\n");
   fflush(stdout);
 

@@ -17,6 +17,7 @@
 #include <mutex>
 #include <thread>
 
+#include <cstring>
 
 
 #include <iostream>
@@ -163,22 +164,40 @@ struct  Me {
   
   }
 
-  std::ostream & dump(std::ostream & out, char sep, SortBy sortMode) const {
+
+  void mergeIn(TraceMap & allCalls, One & smallAlloc)  const {
+     Lock guard(lock);
+     smallAlloc.merge(smallAllocations);
+     for ( auto const & e : calls) allCalls[e.first].merge(e.second);
+  }
+
+
+  static void loadTraceVector(TraceVector & v, SortBy sortMode, TraceMap const & calls, Mutex & lock) {
      using Elem = TraceVector::value_type;
      // auto comp = [](Elem const & a, Elem const & b) {return a.first < b.first;};
      auto comp = [](Elem const & a, Elem const & b) {return a.second.mmax < b.second.mmax;};
      // if (sortMode == SortBy::live) comp = [](Elem const & a, Elem const & b) {return a.second.mlive < b.second.mlive;};
-     TraceVector v;  v.reserve(calls.size());
-     { 
+     v.reserve(calls.size());
+     {
        Lock guard(lock);
        for ( auto const & e : calls) { v.emplace_back(e.first,e.second);  std::push_heap(v.begin(), v.end(),comp);}
      }
      std::sort_heap(v.begin(), v.end(),comp);
+  }
+
+  static std::ostream & dump(std::ostream & out, char sep, SortBy sortMode, TraceMap const & calls, One const & smallAlloc, Mutex & lock) {
+     TraceVector  v;
+     loadTraceVector(v, sortMode, calls, lock);
      for ( auto const & e : v)  out << print_stacktrace(e.first) << ' ' << sep << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
-     auto &  e = smallAllocations;
+     auto &  e = smallAlloc;
      out << ";_start;SmallAllocations " << sep << e.ntot << sep << e.mtot << sep << e.mlive << sep << e.mmax << '\n';
      return out;
   }
+
+   std::ostream & dump(std::ostream & out, char sep, SortBy sortMode) const {
+     return  dump(out, sep, sortMode, calls, smallAllocations, lock);
+   }
+
 
 
   mutable Mutex lock;
@@ -223,6 +242,23 @@ struct  Me {
     }
     if (beVerbose) std::cout << "free not found " << p << std::endl;
   }
+
+
+  static std::ostream & globalDump(std::ostream & out, char sep, SortBy sortMode) {
+    // merge all stacktrace
+    TraceMap calls;
+    One smallAlloc;
+    std::vector<Me*> all;
+    all.reserve(2*us().size());
+    {
+      Lock guard(globalLock);
+      for (auto & e : us() ) all.push_back(e.get());
+    }
+    for (auto e : all) e->mergeIn(calls,smallAlloc);
+    Mutex lock; // no need to lock
+    return  dump(out, sep, sortMode, calls, smallAlloc, lock);
+  }
+
 
 };
 
@@ -451,7 +487,15 @@ namespace mallocProfiler {
 
    void setVerbose(bool isVerbose) {beVerbose=true;}
 
+    Stat summary(bool allThreads)  {
+     if (!allThreads) return Me::me().stat;
+     Stat ret;
+     memcpy(&ret,&globalStat,sizeof(Stat));
+     return ret;
+    } 
+
    std::ostream &  dump(std::ostream & out, char sep, SortBy mode, bool allThreads) {
+      if (allThreads) return Me::globalDump(out,sep,mode);
       auto previous = doRecording;
       doRecording = false;
       Me::me().dump(out, sep, SortBy::max);

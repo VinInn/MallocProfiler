@@ -14,5 +14,7 @@ namespace mallocProfiler {
 
    void noFinalDump(){}
 
+   Stat summary(bool) { return Stat();}
+
    std::ostream &  dump(std::ostream & out, char, SortBy, bool) { return out;}
 }

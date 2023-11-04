@@ -17,12 +17,20 @@ namespace mallocProfiler {
     void add(std::size_t size) {
        mtot += size;
        mlive +=size;
-       mmax = std::max( mmax,mlive);
+       mmax = std::max(mmax,mlive);
        ntot +=1;
     }
     void sub(std::size_t size) {
      mlive -=size;
     }
+
+    void merge(Stat const & other) {
+       mtot += other.mtot;
+       mlive += other.mlive; 
+       mmax = std::max(mmax,other.mlive); // not correct use global
+       ntot += other.ntot;
+    }
+
   };
 
 
@@ -44,6 +52,9 @@ namespace mallocProfiler {
      mlive -=size;
     }
   };
+
+
+   static_assert(sizeof(AtomicStat)==sizeof(Stat),"atomic size not the same");
 
    constexpr bool allThreads=true;
    constexpr bool currentThread=false;
