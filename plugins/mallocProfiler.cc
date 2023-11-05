@@ -71,7 +71,7 @@ namespace {
 
 
   bool globalActive = true;
-  bool beVerbose = true;
+  bool beVerbose = false;
   bool doFinalThreadDump = false;
   bool doFinalDump = true;
   bool doRemoveSignature = true;
