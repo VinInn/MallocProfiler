@@ -71,6 +71,7 @@ namespace {
 
   bool globalActive = true;
   bool beVerbose = true;
+  bool doFinalThreadDump = false;
   bool doFinalDump = true;
   bool doRemoveSignature = true;
 
@@ -142,7 +143,7 @@ struct  Me {
   ~Me() {
     doRecording = false;
     if (beVerbose) std::cout << "MemStat Summary for " << getpid() << ':' << index << " : "  << stat.ntot << ' ' << stat.mtot << ' ' << stat.mlive << ' ' << stat.mmax <<' ' << memMap.size() <<' ' << calls.size() << std::endl;
-    if (doFinalDump) dump(std::cout, '$', SortBy::max);
+    if (doFinalThreadDump) dump(std::cout, '$', SortBy::max);
   }
 
   void add(void * p, std::size_t size) {
@@ -298,6 +299,7 @@ struct  Me {
       auto previous = globalActive;
       globalActive = false;
       std::cout << "MemStat Global Summary for " << getpid() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
+      if (doFinalDump) Me::globalDump(std::cout, '$', SortBy::max);
       globalActive = previous;
     }
   };
