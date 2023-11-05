@@ -60,20 +60,30 @@ namespace
 int nested_func2(int c)
 {
 #ifndef USE_BOOST
-    std::cout << std::stacktrace::current() << '\n';
+   std::cout << std::stacktrace::current() << '\n';
     // h[std::stacktrace::current()] = c;
    auto k = std::hash<std::stacktrace>()(std::stacktrace::current());
    Dl_info dlinfo;
-   for (auto & entry : std::stacktrace::current() ) {
+   int n=0;
+   auto st = std::stacktrace::current();
+   /* demangle crashes
+   for (auto & entry : st ) {
      he[entry] = k;
      auto fl = dladdr((const void*)(entry.native_handle()),&dlinfo);
-     if (dlinfo.dli_sname) { 
+     if (entry.native_handle() && fl && dlinfo.dli_fname && dlinfo.dli_sname) { 
        auto name = demangle(dlinfo.dli_sname);
-       std::cout << name << ' ' << dlinfo.dli_fname <<'\n';
+       std::cout << n << " d " << name << ' ' << dlinfo.dli_sname  << ' ' << dlinfo.dli_fname << std::endl;
        std::free(name);
      }
-     else std::cout << entry.description() << '\n';
+     else std::cout << n << " n " << entry.description() << '\n';
+     n++;
    }
+   */
+   int nf=0;
+   for (auto p=st.begin(); p!=st.end(); ++p) nf++;
+   int nb=0;
+   for (auto p=st.rbegin(); p!=st.rend(); ++p)  std::cout << nb++ << ' ' << (*p).description() << '\n';
+   std::cout << "st size " << st.size() << ' ' << n << ' ' << nf << ' ' << nb << '\n' << std::endl;
 #else
     std::cout << boost::stacktrace::stacktrace()  << '\n';
 #endif

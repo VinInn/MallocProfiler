@@ -31,6 +31,7 @@ using stacktrace = std::stacktrace;
 #endif
 
 
+/*
 namespace __cxxabiv1
 {
   extern "C" char*
@@ -55,7 +56,7 @@ namespace
       }
   }
 }
-
+*/
 
 namespace {
 
@@ -88,6 +89,7 @@ namespace {
      for (auto p=st.rbegin(); p!=st.rend(); ++p ) {
       auto entry = *p;
       std::string name = entry.description();
+      /*
       if (name.empty()) { 
         dladdr((const void*)(entry.native_handle()),&dlinfo);
         if(dlinfo.dli_sname) {
@@ -96,6 +98,7 @@ namespace {
           std::free(cstr);
         }
       }
+      */
       auto last = std::string::npos;
       if (doRemoveSignature)  last = name.rfind('(');
       name = name.substr(0,last);
