@@ -121,7 +121,7 @@ namespace {
 
   thread_local bool doRecording = true;
   
-  std::size_t threshold = 1024;
+  std::size_t threshold = 0; // 1024;
 
   AtomicStat globalStat;
 
@@ -364,6 +364,7 @@ void free(void *ptr) {
 
 
 
+// these functions seems to modify gcc backtrace info
 
 typedef void  (*rfiSym)(const void *, struct object *,void *, void *);
 rfiSym origRFI = nullptr;
@@ -378,7 +379,6 @@ __register_frame_info_bases (const void *begin, struct object *ob,
  globalActive = previous;
 }
 
-
 typedef void (*voidSym)();
 voidSym origRF = nullptr;
 void
@@ -390,85 +390,6 @@ _ZN4llvm14RuntimeDyldELF16registerEHFramesEv()
  origRF();
  globalActive = previous;
 }
-
-
-/* does not work
-typedef struct TInterpreter *  (*CIsym)(void* , const char**);
- CIsym oriCI = nullptr;
- struct TInterpreter *  CreateInterpreter(void* shlibHandle, const char* argv[]) {
-  if(!oriCI)  oriCI = (CIsym)dlsym(RTLD_NEXT,"CreateInterpreter");
-  bool previous = globalActive;
-  globalActive = false;
-  printf("in CI wrapper\n");
-  fflush(stdout);
-  auto p =  (oriCI)(shlibHandle,argv);
-  globalActive = previous;
-  return p;
- }
-*/
-
-
-/*
-// wrap TROOT::InitInterpreter
-typedef void (*RIISym)(struct TROOT *);
-RIISym oriII = nullptr;
-void
-_ZN5TROOT15InitInterpreterEv(struct TROOT * ob) {
- if(!oriII)  oriII = (RIISym)dlsym(RTLD_NEXT,"_ZN5TROOT15InitInterpreterEv");
- bool previous = globalActive;
- globalActive = false;
- printf("im II wrapper\n");
- fflush(stdout);
- oriII(ob);
- globalActive = previous;
-}
-
-typedef long * (*macroSym)(struct TROOT * ob,char const*, int*, bool);
-macroSym oriMacro = nullptr;
-long *
-_ZN5TROOT5MacroEPKcPib(struct TROOT * ob,const char *filename, int *error, bool padUpdate) {
- if(!oriMacro)  oriMacro = (macroSym)dlsym(RTLD_NEXT,"_ZN5TROOT5MacroEPKcPib");
- bool previous = globalActive;
- globalActive = false;
- printf("im Macro wrapper\n");
- fflush(stdout);
- auto p = oriMacro(ob,filename,error,padUpdate);
- globalActive = previous;
- return p;
-}
-
-//wrap clang::DeclContext::LoadLexicalDeclsFromExternalStorage
-namespace clang{struct DeclContext;}
-typedef bool (*exsSym)(struct clang::DeclContext *);
-exsSym oriEXS = nullptr;
-bool 
-_ZNK5clang11DeclContext35LoadLexicalDeclsFromExternalStorageEv(struct clang::DeclContext * ob) {
- if(!oriEXS)  oriEXS = (exsSym)dlsym(RTLD_NEXT,"_ZNK5clang11DeclContext35LoadLexicalDeclsFromExternalStorageEv");
- bool previous = globalActive;
- globalActive = false;
- printf("im LoadLexicalDeclsFromExternalStorage wrapper\n");
- fflush(stdout);
- auto p = oriEXS(ob);
- globalActive = previous;
- return p;
-}
-
-*/
-
-/*
-typedef void  (*dlinitSym)(struct link_map *, int, char **, char **);
-dlinitSym oriDLI = nullptr;
-void
-_dl_init (struct link_map *main_map, int argc, char **argv, char **env) {
-  if(!oriDLI)  oriDLI = (dlinitSym)dlsym(RTLD_NEXT,"_dl_init");
-  bool previous = globalActive;
-  globalActive = false;
-  oriDLI(main_map,argc,argv,env);
-  globalActive = previous;
-}
-*/
-
-
 
 
 } // extern C
