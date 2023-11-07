@@ -1,9 +1,9 @@
 #setenv LD_LIBRARY_PATH ./:${LD_LIBRARY_PATH}
 echo "standalone"
 ./simpleTest
-echo "instrumented"
+echo "\ninstrumented"
 ./simpleTestInstrumented
-echo "preloading"
+echo "\npreloading"
 setenv LD_PRELOAD ../mallocProfiler.so ; ./simpleTest ; unsetenv LD_PRELOAD
-echo "multi thread"
+echo "\nmulti thread"
 setenv LD_PRELOAD ../mallocProfiler.so ; ./mtTest ; unsetenv LD_PRELOAD

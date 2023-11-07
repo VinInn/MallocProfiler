@@ -31,33 +31,6 @@ using stacktrace = std::stacktrace;
 #endif
 
 
-/*
-namespace __cxxabiv1
-{
-  extern "C" char*
-  __cxa_demangle(const char* mangled_name, char* output_buffer, size_t* length,
-                 int* status);
-}
-
-
-namespace
-{
-  char*
-  demangle(const char* name)
-  {
-    int status;
-    char* str = __cxxabiv1::__cxa_demangle(name, nullptr, nullptr, &status);
-    if (status == 0)
-      return str;
-    else
-      {
-           std::free(str);
-        return nullptr;
-      }
-  }
-}
-*/
-
 namespace {
 
   using namespace  mallocProfiler;
@@ -66,46 +39,48 @@ namespace {
   typedef std::vector<std::thread> ThreadGroup;
   typedef std::mutex Mutex;
   typedef std::unique_lock<std::mutex> Lock;
-  // typedef std::condition_variable Condition;
-
-
 
   bool globalActive = true;
   bool beVerbose = false;
   bool doFinalThreadDump = false;
   bool doFinalDump = true;
-  bool doRemoveSignature = true;
+  bool doRemangling = true;
 
 
   Mutex globalLock;
 
+  
+  bool remangle(std::string & name) {
+    std::string doTrucate[] = {"__cxx11::basic_regex","cling::","clang","llvm::","boost::spirit"};
+    std::string fakeSym[] = {"regex","cling","clang","llvm","spirit"};
+    // remove signature
+    auto last = std::string::npos;
+    last = name.rfind('(');
+    name = name.substr(0,last);
+    // truncate if spirit, cling, Clang or std::regex etc
+    int i=0;
+    for (auto & s : doTrucate) {
+      if (name.find(s)!=std::string::npos) { name = fakeSym[i]; return true;}
+      ++i;
+    }
+    return false;
+  }
+
   std::string print_stacktrace(stacktrace const & st) {
      std::string trace;
-     Dl_info dlinfo;
-#ifdef USE_BOOST 
-     for (auto & entry : st ) trace += entry.name() + ';';
-#else
      // reverse stack trace to fit flamegraph tool
      for (auto p=st.rbegin(); p!=st.rend(); ++p ) {
       auto entry = *p;
+#ifdef USE_BOOST
+      std::string name = entry.name();
+#else
       std::string name = entry.description();
-      /*
-      if (name.empty()) { 
-        dladdr((const void*)(entry.native_handle()),&dlinfo);
-        if(dlinfo.dli_sname) {
-          auto cstr = demangle(dlinfo.dli_sname);
-          if (cstr) name = cstr;
-          std::free(cstr);
-        }
-      }
-      */
-      auto last = std::string::npos;
-      if (doRemoveSignature)  last = name.rfind('(');
-      name = name.substr(0,last);
-      // trace += name.substr(0,last) + ';';
-      trace += name + ';';
-   }
 #endif
+      bool truncate = false;
+      if (doRemangling) truncate = remangle(name);
+      if (!name.empty()) trace += name + ';';
+      if (truncate) break;
+     }
      return trace;
   }
 
