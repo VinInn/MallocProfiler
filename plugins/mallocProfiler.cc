@@ -2,6 +2,7 @@
 //  c++ -O3 -pthread -fPIC -shared -std=c++23 plugins/mallocProfiler.cc -lstdc++exp -o mallocProfiler.so -ldl -Iinclude
 
 #include "mallocProfiler.h"
+#include "argumentRemover.h"
 
 #include <cstdint>
 #include <dlfcn.h>
@@ -51,13 +52,15 @@ namespace {
 
   
   bool remangle(std::string & name) {
-    std::string doTrucate[] = {"__cxx11::basic_regex","cling::","clang","llvm::","boost::spirit"};
-    std::string fakeSym[] = {"regex","cling","clang","llvm","spirit"};
+    std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
+    std::string fakeSym[] = {"regex","TFormula","TClass","TCling","cling","clang","llvm","spirit"};
     // remove signature
     auto last = std::string::npos;
     last = name.rfind('(');
     name = name.substr(0,last);
-    // truncate if spirit, cling, Clang or std::regex etc
+    // remove alloctor
+    removeTemplate(name,"std::allocator");
+    // truncate if spirit, cling, Clang, std::regex etc
     int i=0;
     for (auto & s : doTrucate) {
       if (name.find(s)!=std::string::npos) { name = fakeSym[i]; return true;}
@@ -96,7 +99,7 @@ namespace {
 
   thread_local bool doRecording = true;
   
-  std::size_t threshold = 0; // 1024;
+  std::size_t threshold = 128; // 1024;
 
   AtomicStat globalStat;
 

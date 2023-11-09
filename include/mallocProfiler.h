@@ -41,7 +41,7 @@ namespace mallocProfiler {
     std::atomic<uint64_t> ntot=0;
 
     void add(std::size_t size) {
-       mtot += size;
+       mtot += double(size);
        mlive +=size;
        uint64_t lval = mlive;
        uint64_t prev = mmax;
