@@ -18,7 +18,7 @@ namespace {
     std::ofstream out (ss.str());
     int t=0;
     while(run)  {
-      std::this_thread::sleep_for(10000ms); // std::chrono::seconds(10)
+      std::this_thread::sleep_for(10s); // std::chrono::seconds(10)
       t+=10;
       auto globalStat = mallocProfiler::summary(true); 
       out << "MemStat Global Summary " << t << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
@@ -39,6 +39,8 @@ namespace {
 
   struct Tracer {
     Tracer() {
+      if (!mallocProfiler::loaded()) return;
+      mallocProfiler::noFinalDump();
       std::thread t(tracer);
       t.detach();
       std::thread d(dumper);
