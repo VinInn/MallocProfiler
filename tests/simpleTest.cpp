@@ -26,7 +26,8 @@ void allAlloc() {
 
  mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max, false);
 
- assert(0==c[24]);
+ assert(0==b[24]);
+ assert(c!=d);
  assert(0==(((uint64_t)(d))&7));
  free(b);
  free(c);
