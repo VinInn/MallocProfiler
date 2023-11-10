@@ -36,7 +36,7 @@ namespace {
       std::this_thread::sleep_for(std::chrono::seconds(10*60));
       std::cerr << "\n\n>>>> DUMPER GOING TO START <<<<<\n\n" << std::endl;
       std::ostringstream ss;
-      ss << "memdump_" << getpid() << ' ' << n++ << ".mdr";
+      ss << "memdump_" << getpid() << '_' << n++ << ".mdr";
       std::ofstream out (ss.str());
       mallocProfiler::dump(out);
       out.close();
