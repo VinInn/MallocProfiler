@@ -4,4 +4,4 @@ c++ -O3 -pthread -fPIC -shared -std=c++23 plugins/mallocProfiler.cc -lstdc++exp 
 c++ -O3 -pthread -fPIC -shared -std=c++23 src/dummy.cc -o dummyMallocProfiler.o -Iinclude -Wl,-E -Wl,--hash-style=gnu
 c++ -c -O3 -pthread -fPIC  -std=c++23 plugins/mallocProfiler.cc -o mallocProfiler.o -Iinclude 
 # -I/cvmfs/cms.cern.ch/el8_amd64_gcc12/external/boost/1.80.0-826a207b8543c52970cb1f72d50f068c/include -DUSE_BOOST
-
+c++ -O3 -pthread -fPIC -shared -std=c++23 src/TracingThread.cc -o tracingThread.so -ldl -Iinclude

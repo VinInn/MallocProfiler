@@ -234,8 +234,8 @@ struct  Me {
 
   static std::ostream & globalDump(std::ostream & out, char sep, SortBy sortMode) {
     // merge all stacktrace
-    auto previous = globalActive;
-    globalActive = false;
+    auto previous = doRecording;
+    doRecording = false;
     {
     TraceMap calls;
     One smallAlloc;
@@ -249,7 +249,7 @@ struct  Me {
     Mutex alock; // no need to lock
     dump(out, sep, sortMode, calls, smallAlloc, alock);
     }
-    globalActive = previous;
+    doRecording = previous;
     return out;
   }
 
