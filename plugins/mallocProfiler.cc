@@ -260,14 +260,17 @@ struct  Me {
 
   typedef void * (*mallocSym) (std::size_t);
   typedef void (*freeSym) (void*);
-  typedef void * (*aligned_allocSym)( size_t alignment, size_t size );
+  typedef void * (*callocSym)(std::size_t, std::size_t); // also for aligned_alloc
+  typedef void * (*reallocSym)(void *, std::size_t);
 
   typedef void * (*dlopenSym)(const char *, int);
 
   dlopenSym origDL = nullptr;
   mallocSym origM = nullptr;
   freeSym origF = nullptr;
-  aligned_allocSym origA = nullptr;
+  callocSym origA = nullptr;
+  callocSym origC = nullptr;
+  reallocSym origR = nullptr;
 
 
   struct Banner {
@@ -315,8 +318,10 @@ void *malloc(std::size_t size) {
   return p;
 }
 
-void *aligned_alloc( size_t alignment, size_t size ) {
-  if (!origA) origA = (aligned_allocSym)dlsym(RTLD_NEXT,"aligned_alloc");
+
+
+void *aligned_alloc(std::size_t alignment, std::size_t size ) {
+  if (!origA) origA = (callocSym)dlsym(RTLD_NEXT,"aligned_alloc");
   assert(origA);
   auto p  = origA(alignment, size);
   if (doRecording&&globalActive) {
@@ -325,8 +330,33 @@ void *aligned_alloc( size_t alignment, size_t size ) {
     doRecording = true;
   }
   return p;
-
 }
+
+void *calloc(std::size_t count, std::size_t size ) {
+  if (!origC) origC = (callocSym)dlsym(RTLD_NEXT,"calloc");
+  assert(origC);
+  auto p  = origC(count, size);
+  if (doRecording&&globalActive) {
+    doRecording = false;
+    Me::me().add(p, count*size);
+    doRecording = true;
+  }
+  return p;
+}
+
+void *realloc(void *ptr, std::size_t size) {
+  if (!origR) origR = (reallocSym)dlsym(RTLD_NEXT,"realloc");
+  assert(origR);
+  auto p  = origR(ptr,size);
+  if (doRecording&&globalActive) {
+    doRecording = false;
+    if(!Me::me().sub(ptr)) Me::globalSub(ptr);
+    Me::me().add(p, size);
+    doRecording = true;
+  }
+  return p;
+}
+
 
 
 void free(void *ptr) {

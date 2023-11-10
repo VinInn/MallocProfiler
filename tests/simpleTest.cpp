@@ -9,9 +9,32 @@ double dummy = 0;
 #include<cstdio>
 #include<iostream>
 #include<iomanip>
+#include<cassert>
 
 // from libs
 void a(std::vector<int*>&v);
+
+
+void allAlloc() {
+
+ auto a = (int*)malloc(4*1024);
+ auto b = (int*)calloc(4,1024);
+ auto c = (int*)realloc(a,8*1024);
+ auto d = (int*)aligned_alloc(64,4*1024);
+
+ if (a==c) std::cout << "realloc same" << std::endl;
+
+ mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max, false);
+
+ assert(0==c[24]);
+ assert(0==(((uint64_t)(d))&7));
+ free(b);
+ free(c);
+ free(d);
+
+ mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max, false);
+
+};
 
 
 template<typename T, int mode>
@@ -55,6 +78,10 @@ int main() {
 
 
   std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(mallocProfiler::allThreads) << ' ' << mallocProfiler::active(mallocProfiler::currentThread) << std::endl;
+
+
+  allAlloc();
+  std::cout << std::endl;
 
   go<int,0>(100);
   go<int,1>(1000);
