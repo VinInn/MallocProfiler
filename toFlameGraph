@@ -1,0 +1,27 @@
+#  3 is memtot, 4 is memlive
+grep '_mpTrace_' $1.mdr | sed 's/\;\{1,\}/;/g' | sed 's/^;//' | cut -f1,4 -d'$' \
+| sed 's/_mpTrace_;_start;__libc_start_main;main;main::{lambda()#1}::operator();tbb::detail::r1::task_arena_impl::execute;tbb::detail::d1::task_arena_function<main::{lambda()#1}::operator()() const::{lambda()#1}, void>::operator();//' \
+| sed 's/_mpTrace.*tbb::detail::d1::function_task/function_task/' \
+| sed 's/std::__cxx11::basic_string<char, std::char_traits<char> >/string/g' \
+| sed 's/std::basic_string_view<char, std::char_traits<char> >/string_view/g' \
+| sed 's/operator new;malloc;//g' \
+| sed 's/malloc;//g' \
+| sed 's/unsigned /u/g' | sed 's/operator/op/g' | sed 's/std:://g' | sed 's/const//g' | sed 's/&//g' | sed 's/ //g' | sed 's/::/:/g' | tr '$' ' ' >  $1.md
+
+
+#grep "doEvent" step3_DumpNew.md | sed 's/.*edm:WorkerT/edm:WorkerT/'
+
+# candidate to be remangled to shorten file  (half size for CMSSW?)
+# all blanks
+# std::
+# std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >
+# std::basic_string_view<char, std::char_traits<char> >
+# main::{lambda()#1}::operator()() const;tbb::detail::d1::task_arena_function<main::{lambda()#1}::operator()() const::{lambda()#1}, void>::operator()() const;
+# std::vector<T, std::allocator<T> >
+#const
+#&
+#unsigned int 
+#unsigned long
+#operator
+# ::
+# boost::spirit::classic
