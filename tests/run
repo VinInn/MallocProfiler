@@ -3,6 +3,8 @@ echo "standalone"
 ./simpleTest
 echo "\ninstrumented"
 ./simpleTestInstrumented
+echo "\npreloading OFF"
+setenv LD_PRELOAD ../mallocProfilerOFF.so ; ./simpleTest ; unsetenv LD_PRELOAD
 echo "\npreloading"
 setenv LD_PRELOAD ../mallocProfiler.so ; ./simpleTest ; unsetenv LD_PRELOAD
 echo "\nmulti thread"

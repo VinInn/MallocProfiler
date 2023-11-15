@@ -50,7 +50,7 @@ void go(int size) {
 }
 
 
-
+thread_local bool flag=true;
 
 int main() {
 
@@ -94,14 +94,14 @@ int main() {
   std::cout <<  "stress alloc"  << std::endl;
   nt =0;
   for (int i=0; i<2049; ++i) {
-    Thread t([&](int k){vvv[k]=new int[1000]; nt++;},i);
+    Thread t([&](int k){if(flag) vvv[k]=new int[1000]; nt++;},i);
     t.detach();
   }
   while (nt<2049)  std::this_thread::yield();
   std::cout <<  "stress delete "  << std::endl;
   nt=0;
   for (int i=0; i<2049; ++i) {
-    Thread t([&](int k){delete vvv[k]; nt++;},i);
+    Thread t([&](int k){if (flag) delete vvv[k]; nt++;},i);
     t.detach();
   }
   while (nt<2049)  std::this_thread::yield();
