@@ -15,7 +15,12 @@ namespace mallocProfiler {
 
    void noFinalDump(){}
 
+   void noZeroLiveDump(bool){}
+
    Stat summary(bool) { return Stat();}
 
    std::ostream &  dump(std::ostream & out, char, SortBy, bool) { return out;}
+
+   void setDumpingInterval(std::chrono::seconds const &, std::chrono::minutes const &) {}
+
 }

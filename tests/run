@@ -9,3 +9,5 @@ echo "\npreloading"
 setenv LD_PRELOAD ../mallocProfiler.so ; ./simpleTest ; unsetenv LD_PRELOAD
 echo "\nmulti thread"
 setenv LD_PRELOAD ../mallocProfiler.so ; ./mtTest ; unsetenv LD_PRELOAD
+echo "\ndumping threads"
+setenv LD_PRELOAD ../mallocProfiler.so:../tracingThread.so ; ./simpleTestS ; unsetenv LD_PRELOAD

@@ -71,12 +71,16 @@ void recursive(std::vector<int*> & v, int n) {
 }
 
 #include<iostream>
+#include<chrono>
+#include<thread>
+using namespace std::chrono_literals;
 
 int main() {
 
   printf("START\n");
   fflush(stdout);
 
+  mallocProfiler::setDumpingInterval(1s,1min);
 
   std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(mallocProfiler::allThreads) << ' ' << mallocProfiler::active(mallocProfiler::currentThread)
             << " threshold "  << mallocProfiler::getThreshold() << std::endl;
@@ -111,7 +115,15 @@ int main() {
   std::cout << "calling libs" << std::endl;
   a(v);
 
+#ifdef SLEEP
+  std::this_thread::sleep_for(3s);
+#endif
+
   }
+
+#ifdef SLEEP
+  std::this_thread::sleep_for(2s);
+#endif
 
   std::cout << "=== Global Profile ===" << std::endl;
   mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max,  mallocProfiler::allThreads);

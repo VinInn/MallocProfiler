@@ -3,6 +3,7 @@
 #include<iosfwd>
 #include<atomic>
 #include<algorithm>
+#include<chrono>
 
 namespace mallocProfiler {
 
@@ -75,6 +76,10 @@ namespace mallocProfiler {
 
    void noFinalDump();
 
+   void noZeroLiveDump(bool);
+
    std::ostream &  dump(std::ostream &, char separator='$', SortBy mode=SortBy::none, bool allThreads=true);
+   
+   void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::minutes const & dumpLap);
 
 }

@@ -50,7 +50,7 @@ namespace {
   bool doFinalThreadDump = false;
   bool doFinalDump = true;
   bool doRemangling = true;
-
+  bool no0dump = false;
 
   Mutex globalLock;
 
@@ -186,7 +186,10 @@ struct  Me {
   static std::ostream & dump(std::ostream & out, char sep, SortBy sortMode, TraceMap const & calls, One const & smallAlloc, Mutex & alock) {
      TraceVector  v;
      loadTraceVector(v, sortMode, calls, alock);
-     for ( auto const & e : v)  out << "_mpTrace_;" << print_stacktrace(e.first) << ' ' << sep << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
+     for ( auto const & e : v)  { 
+       if (no0dump && 0==e.second.mlive) continue;
+       out << "_mpTrace_;" << print_stacktrace(e.first) << ' ' << sep << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
+     }
      auto &  e = smallAlloc;
      out << "_mpTrace_;SmallAllocations " << sep << e.ntot << sep << e.mtot << sep << e.mlive << sep << e.mmax << '\n';
      return out;
@@ -477,6 +480,9 @@ namespace mallocProfiler {
    std::size_t getThreshold() { return threshold;}
 
    void noFinalDump(){ doFinalDump=false;}
+
+   void noZeroLiveDump(bool no) {no0dump=no;}
+
 
    void setVerbose(bool isVerbose) {beVerbose=true;}
 

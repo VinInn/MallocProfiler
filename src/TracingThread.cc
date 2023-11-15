@@ -10,6 +10,22 @@
 
 namespace {
 
+  std::chrono::seconds summaryInterval(10);
+  std::chrono::minutes dumpInterval(10);
+}
+
+
+namespace mallocProfiler {
+
+  void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::minutes const & dumpLap) {
+      summaryInterval = summaryLap;
+      dumpInterval = dumpLap;
+  }
+
+}
+
+namespace {
+
   std::atomic<bool> run=true;
 
   void tracer() {
@@ -19,12 +35,12 @@ namespace {
     ss << "memstat_" << getpid() << ".mdr";
     std::ofstream out (ss.str());
     out << "MemStat Global Summary time: ncalls memtot memlive maxlive" << std::endl; 
-    int t=0;
+    std::chrono::seconds t(0);
     while(run)  {
-      std::this_thread::sleep_for(10s); // std::chrono::seconds(10)
-      t+=10;
+      std::this_thread::sleep_for(summaryInterval); 
+      t+=summaryInterval;
       auto globalStat = mallocProfiler::summary(true); 
-      out << "MemStat Global Summary " << t << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
+      out << "MemStat Global Summary " << t.count() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
    }
    out.close();
   }
@@ -33,7 +49,7 @@ namespace {
     mallocProfiler::deactivate(mallocProfiler::currentThread);
     int n=0;
     while(run)  {
-      std::this_thread::sleep_for(std::chrono::seconds(10*60));
+      std::this_thread::sleep_for(dumpInterval);
       std::cerr << "\n\n>>>> DUMPER GOING TO START <<<<<\n\n" << std::endl;
       std::ostringstream ss;
       ss << "memdump_" << getpid() << '_' << n++ << ".mdr";
@@ -49,6 +65,7 @@ namespace {
     Tracer() {
       if (!mallocProfiler::loaded()) return;
       mallocProfiler::noFinalDump();
+      mallocProfiler::noZeroLiveDump(true);
       std::thread t(tracer);
       t.detach();
       std::thread d(dumper);
