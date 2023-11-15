@@ -219,6 +219,7 @@ struct  Me {
 
   static std::ostream & globalDump(std::ostream & out, char sep, SortBy sortMode) {
     // merge all stacktrace
+    if (us().empty()) return out;
     auto previous = doRecording;
     doRecording = false;
     {
@@ -490,7 +491,7 @@ namespace mallocProfiler {
       auto previous = doRecording;
       doRecording = false;
       if (allThreads) Me::globalDump(out,sep,mode);
-      else Me::me().dump(out, sep, SortBy::max);
+      else if(tlme) Me::me().dump(out, sep, SortBy::max);
       doRecording = previous;
       return out;
    }
