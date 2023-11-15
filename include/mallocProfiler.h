@@ -66,7 +66,8 @@ namespace mallocProfiler {
    void activate(bool allThreads=true);
    void deactivate(bool allThreads=true);
 
-   void setThreshold(std::size_t value);
+   void setThreshold(std::size_t value, bool reverse=false);
+   std::size_t getThreshold();
 
    void setVerbose(bool isVerbose);
 

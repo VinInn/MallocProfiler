@@ -1,4 +1,4 @@
-// compile with
+// compile wit
 //  c++ -O3 -pthread -fPIC -shared -std=c++23 plugins/mallocProfiler.cc -lstdc++exp -o mallocProfiler.so -ldl -Iinclude
 
 #include "mallocProfiler.h"
@@ -41,7 +41,11 @@ namespace {
   typedef std::mutex Mutex;
   typedef std::unique_lock<std::mutex> Lock;
 
+#ifdef MALLOC_PROFILER_OFF
+  bool globalActive = false;
+#else
   bool globalActive = true;
+#endif
   bool beVerbose = false;
   bool doFinalThreadDump = false;
   bool doFinalDump = true;
@@ -97,9 +101,14 @@ namespace {
   }
 
 
-  thread_local bool doRecording = true;
-  
+#ifdef MALLOC_PROFILER_OFF
+  thread_local bool doRecording = false;
+#else 
+  thread_local bool doRecording = true; 
+#endif
+
   std::size_t threshold = 128; // 1024;
+  bool invertThreshold = false;
 
   AtomicStat globalStat;
 
@@ -130,7 +139,8 @@ struct  Me {
   void add(void * p, std::size_t size) {
     Lock guard(lock);
     stat.add(size);
-    auto & e = size < threshold ? smallAllocations : calls[get_stacktrace()];
+    bool cond = invertThreshold ? size > threshold : size < threshold;
+    auto & e = cond ? smallAllocations : calls[get_stacktrace()];
     memMap[p] = std::make_pair(size, &e);
     e.add(size);
     globalStat.add(size);
@@ -201,35 +211,10 @@ struct  Me {
    return us;
   }
 
-  static Me & me() {
-    thread_local Me * tlme = nullptr;
-    if (tlme)  return *tlme; 
-    
-    auto l = std::make_unique<Me>();
-    tlme = l.get();
-    {
-      Lock guard(globalLock);
-      tlme->index=us().size();
-      us().push_back(std::move(l));
-    }
-    return *tlme;
-  }
+  static Me & me(); 
 
 
-  static void globalSub(void * p)  {
-    std::vector<Me*> all;
-    all.reserve(2*us().size());
-    {
-      Lock guard(globalLock);
-      for (auto & e : us() ) all.push_back(e.get());
-    }
-    auto here = &me();
-    for (auto e : all) {
-     if (here == e) continue;
-     if (e->sub(p)) return;
-    }
-    if (beVerbose) std::cout << "free not found " << p << std::endl;
-  }
+  static void globalSub(void * p);
 
 
   static std::ostream & globalDump(std::ostream & out, char sep, SortBy sortMode) {
@@ -256,7 +241,36 @@ struct  Me {
 
 };
 
+  thread_local Me * tlme = nullptr; 
 
+  Me & Me::me() {
+    if (tlme)  return *tlme;
+
+    auto l = std::make_unique<Me>();
+    tlme = l.get();
+    {
+      Lock guard(globalLock);
+      tlme->index=us().size();
+      us().push_back(std::move(l));
+    }
+    return *tlme;
+  }
+
+  void Me::globalSub(void * p)  {
+    if (!p) return;
+    std::vector<Me*> all;
+    all.reserve(2*us().size());
+    {
+      Lock guard(globalLock);
+      for (auto & e : us() ) all.push_back(e.get());
+    }
+    auto here = tlme;
+    for (auto e : all) {
+     if (here == e) continue;
+     if (e->sub(p)) return;
+    }
+    if (beVerbose) std::cout << "free not found " << p << std::endl;
+  }
 
   typedef void * (*mallocSym) (std::size_t);
   typedef void (*freeSym) (void*);
@@ -310,7 +324,7 @@ void *malloc(std::size_t size) {
   if (!origM) origM = (mallocSym)dlsym(RTLD_NEXT,"malloc");
   assert(origM);
   auto p  = origM(size); 
-  if (doRecording&&globalActive) {
+  if (globalActive&&doRecording) {
     doRecording = false;
     Me::me().add(p, size);
     doRecording = true;
@@ -324,7 +338,7 @@ void *aligned_alloc(std::size_t alignment, std::size_t size ) {
   if (!origA) origA = (callocSym)dlsym(RTLD_NEXT,"aligned_alloc");
   assert(origA);
   auto p  = origA(alignment, size);
-  if (doRecording&&globalActive) {
+  if (globalActive&&doRecording) {
     doRecording = false;
     Me::me().add(p, size);
     doRecording = true;
@@ -332,11 +346,12 @@ void *aligned_alloc(std::size_t alignment, std::size_t size ) {
   return p;
 }
 
+  
 void *calloc(std::size_t count, std::size_t size ) {
   if (!origC) origC = (callocSym)dlsym(RTLD_NEXT,"calloc");
   assert(origC);
   auto p  = origC(count, size);
-  if (doRecording&&globalActive) {
+  if (globalActive&&doRecording) {
     doRecording = false;
     Me::me().add(p, count*size);
     doRecording = true;
@@ -344,35 +359,65 @@ void *calloc(std::size_t count, std::size_t size ) {
   return p;
 }
 
+/* it triggers an infinite recursion in "_dl_update_slotinfo"
 void *realloc(void *ptr, std::size_t size) {
   if (!origR) origR = (reallocSym)dlsym(RTLD_NEXT,"realloc");
   assert(origR);
+
+  // it may call free/malloc for what we know
+  auto previous = doRecording;
+  doRecording = false;
   auto p  = origR(ptr,size);
-  if (doRecording&&globalActive) {
+  doRecording = previous;
+
+  if (globalActive&&doRecording) {
     doRecording = false;
-    if(!Me::me().sub(ptr)) Me::globalSub(ptr);
+    if((!tlme) || !Me::me().sub(ptr)) Me::globalSub(ptr);
     Me::me().add(p, size);
     doRecording = true;
   }
   return p;
 }
+*/
 
+// bool doingUSI = false;
 
-
+// problem when called by "_dl_update_slotinfo"
 void free(void *ptr) {
   if(!origF) origF = (freeSym)dlsym(RTLD_NEXT,"free");
   assert(origF);
-  if (doRecording&&globalActive) {
+  if (globalActive&&doRecording) {
     doRecording = false;
-    if(!Me::me().sub(ptr)) Me::globalSub(ptr);
+    if((!tlme) || (!Me::me().sub(ptr)) ) Me::globalSub(ptr);
     doRecording = true;
   }
   origF(ptr);
 }
 
 
+/*
+// update_get_addr is garanteed not inlined
+// https://github.com/lattera/glibc/blob/master/elf/dl-tls.c#L797
+typedef struct link_map * (*USIsym)(struct tls_index *ti);
+USIsym origUSI = nullptr;
+struct link_map *
+update_get_addr(struct tls_index *ti) {
+  if(!origUSI) origUSI = (USIsym)dlsym(RTLD_NEXT,"update_get_addr");
+  assert(origF);
+  doingUSI = true;
+  bool previous = globalActive;
+  globalActive = false;
+  auto p =  origUSI(ti);
+  globalActive = previous;
+  doingUSI = false;
+  return p;
+}
+*/
 
+
+//
 // these functions seems to modify gcc backtrace info
+//
 
 typedef void  (*rfiSym)(const void *, struct object *,void *, void *);
 rfiSym origRFI = nullptr;
@@ -427,7 +472,8 @@ namespace mallocProfiler {
     }
    }
 
-   void setThreshold(std::size_t value){ threshold = value; }
+   void setThreshold(std::size_t value, bool reverse){ threshold = value; invertThreshold = reverse;}
+   std::size_t getThreshold() { return threshold;}
 
    void noFinalDump(){ doFinalDump=false;}
 

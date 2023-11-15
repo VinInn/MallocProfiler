@@ -78,7 +78,8 @@ int main() {
   fflush(stdout);
 
 
-  std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(mallocProfiler::allThreads) << ' ' << mallocProfiler::active(mallocProfiler::currentThread) << std::endl;
+  std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(mallocProfiler::allThreads) << ' ' << mallocProfiler::active(mallocProfiler::currentThread)
+            << " threshold "  << mallocProfiler::getThreshold() << std::endl;
 
 
   allAlloc();
