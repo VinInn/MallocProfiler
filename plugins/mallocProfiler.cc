@@ -230,11 +230,14 @@ struct  Me {
      auto sep = ' ';
      TraceVector  v;
      loadTraceVector(v, SortBy::max, calls, lock);
+     
+     int  lsize = from.empty() ? std::stacktrace().current().size()-4 : 0;
      for ( auto const & e : v)  {
        if (no0dump && 0==e.second.mlive) continue;
        std::ostringstream sout;
        sout <<"Stat " << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << " at\n";
        int n=0;
+       int last = e.first.size() - lsize;
        for (auto const & entry : e.first) {
          sout << '#' << n++ << ' ';
 #ifdef USE_BOOST
@@ -244,7 +247,9 @@ struct  Me {
 #endif 
          sout << name << ' ' << entry.source_file() <<  ':' << entry.source_line() << '\n';
          if (!from.empty() && std::string::npos!=name.find(from)) { out << sout.str(); break; }
+         if (n==last) break;
        }  // symbols
+       if (from.empty())  out << sout.str();
      }  //stacktraces
      return out;
    }
