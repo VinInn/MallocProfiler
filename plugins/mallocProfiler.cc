@@ -230,11 +230,11 @@ struct  Me {
      auto sep = ' ';
      TraceVector  v;
      loadTraceVector(v, SortBy::max, calls, lock);
-     int n=0;
      for ( auto const & e : v)  {
        if (no0dump && 0==e.second.mlive) continue;
        std::ostringstream sout;
-       sout <<"Stat " << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
+       sout <<"Stat " << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << " at\n";
+       int n=0;
        for (auto const & entry : e.first) {
          sout << '#' << n++ << ' ';
 #ifdef USE_BOOST
