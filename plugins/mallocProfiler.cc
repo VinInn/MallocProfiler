@@ -32,6 +32,32 @@ using stacktrace = std::stacktrace;
 #endif
 
 
+namespace mallocProfiler {
+
+  struct AtomicStat {
+    std::atomic<double> mtot = 0;
+    std::atomic<uint64_t> mlive = 0;
+    std::atomic<uint64_t> mmax=0;
+    std::atomic<uint64_t> ntot=0;
+
+    void add(std::size_t size) {
+       mtot += double(size);
+       mlive +=size;
+       uint64_t lval = mlive;
+       uint64_t prev = mmax;
+       while(prev < lval && !mmax.compare_exchange_weak(prev, lval)){}
+       ntot +=1;
+    }
+    void sub(std::size_t size) {
+     mlive -=size;
+    }
+  };
+
+
+   static_assert(sizeof(AtomicStat)==sizeof(Stat),"atomic size not the same");
+
+}
+
 namespace {
 
   using namespace  mallocProfiler;
@@ -200,6 +226,29 @@ struct  Me {
    }
 
 
+   std::ostream & details(std::ostream & out, std::string const & from) {
+     auto sep = ' ';
+     TraceVector  v;
+     loadTraceVector(v, SortBy::max, calls, lock);
+     int n=0;
+     for ( auto const & e : v)  {
+       if (no0dump && 0==e.second.mlive) continue;
+       std::ostringstream sout;
+       sout <<"Stat " << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
+       for (auto const & entry : e.first) {
+         sout << '#' << n++ << ' ';
+#ifdef USE_BOOST
+         std::string name = entry.name();
+#else
+         std::string name = entry.description();
+#endif 
+         sout << name << ' ' << entry.source_file() <<  ':' << entry.source_line() << '\n';
+         if (!from.empty() && std::string::npos!=name.find(from)) { out << sout.str(); break; }
+       }  // symbols
+     }  //stacktraces
+     return out;
+   }
+
 
   mutable Mutex lock;
   std::unordered_map<void*,std::pair<uint64_t,One*>> memMap; // active memory blocks 
@@ -242,6 +291,11 @@ struct  Me {
     return out;
   }
 
+
+  static std::ostream & globalDetails(std::ostream & out, std::string const & from) {
+
+    return out;
+  }
 
 };
 
@@ -459,6 +513,10 @@ namespace mallocProfiler {
    bool loaded() {return true;}
 
    bool active(bool allThreads) { return allThreads ? globalActive : doRecording;}
+   bool enabled () { return globalActive;}
+
+   void enable () { globalActive = true;}
+   void disable () { globalActive = false;}
 
    void activate(bool allThreads) {
      if (allThreads) {
@@ -498,6 +556,15 @@ namespace mallocProfiler {
       doRecording = false;
       if (allThreads) Me::globalDump(out,sep,mode);
       else if(tlme) Me::me().dump(out, sep, SortBy::max);
+      doRecording = previous;
+      return out;
+   }
+
+   std::ostream & dumpDetails(std::ostream & out, std::string const & from, bool allThreads) {
+      auto previous = doRecording;
+      doRecording = false;
+      if (allThreads) Me::globalDetails(out,from);
+      else if(tlme) Me::me().details(out, from);
       doRecording = previous;
       return out;
    }

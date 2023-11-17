@@ -81,6 +81,7 @@ int main() {
   fflush(stdout);
 
   mallocProfiler::setDumpingInterval(1s,1min);
+  mallocProfiler::setThreshold(0);
 
   std::cout << "profiler status " << std::boolalpha << mallocProfiler::active(mallocProfiler::allThreads) << ' ' << mallocProfiler::active(mallocProfiler::currentThread)
             << " threshold "  << mallocProfiler::getThreshold() << std::endl;
@@ -114,6 +115,7 @@ int main() {
 
   std::cout << "calling libs" << std::endl;
   a(v);
+  mallocProfiler::dumpDetails(std::cout, "BBB", mallocProfiler::currentThread);
 
 #ifdef SLEEP
   std::this_thread::sleep_for(3s);
