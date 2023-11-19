@@ -2,7 +2,7 @@
 a profiler of "malloc" activities".
 
 It will trace location (stacktrace) and size of memory allocations (```malloc```, etc) for each thread and report them at the end of the process.
-The dump tries to reproduce the flagraph input format https://github.com/jlfwong/speedscope/wiki/Importing-from-custom-sources#brendan-greggs-collapsed-stack-format accepted by speedscape as well.
+The dump tries to reproduce the flamegraph input format (https://github.com/jlfwong/speedscope/wiki/Importing-from-custom-sources#brendan-greggs-collapsed-stack-format) accepted by speedscope as well.
 An API is provided to configure it and get reports on user request.
 
 ## Prerequisite
@@ -17,10 +17,11 @@ clone this repository ad ```cd``` in it.
 
 ```export LD_PRELOAD=./mallocProfiler.so```
 
-invoke the application to profile
+invoke the application to profile and filter the profile using ```grep _mptrace```
 
 ```export LD_PRELOAD=""```
 
+drop the resulting file in speedscope (or genarate a flamegraph svg)
 
 
 
