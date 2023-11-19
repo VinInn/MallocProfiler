@@ -1,4 +1,6 @@
-# run as python3 demo.py | _mpTrace_ >& pyDemo.mdr
+# run as python3 demo.py | grep _mpTrace | cut -f1,3 -d'$' | tr '$' ' ' >& pyDemo.md
+# use 2 to select number-of-calls, 3 to select total memory, 4 to select live-memory or 5 to  select max-live-memory
+# mind that max-live does not aggregate properly and, in absence of memory leak, live-memory should be zero at the end of a process
 import numpy as np
 time = np.linspace(20, 145, 5)  # time scale
 data = np.sin(np.arange(20)).reshape(5, 4)  # 4 time-dependent series
