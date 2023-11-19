@@ -32,72 +32,39 @@ H h;
 HE he;
 
 
-namespace __cxxabiv1
-{
-  extern "C" char*
-  __cxa_demangle(const char* mangled_name, char* output_buffer, size_t* length,
-                 int* status);
-}
-
-
-namespace
-{
-  char*
-  demangle(const char* name)
-  {
-    int status;
-    char* str = __cxxabiv1::__cxa_demangle(name, nullptr, nullptr, &status);
-    if (status == 0)
-      return str;
-    else
-      {
-        std::free(str);
-        return nullptr;
-      }
-  }
-}
 
 #ifdef INLIB 
+inline
 int nested_func2(int c)
 {
 #ifndef USE_BOOST
    std::cout << std::stacktrace::current() << '\n';
-    // h[std::stacktrace::current()] = c;
    auto k = std::hash<std::stacktrace>()(std::stacktrace::current());
-   Dl_info dlinfo;
    int n=0;
    auto st = std::stacktrace::current();
-   /* demangle crashes
-   for (auto & entry : st ) {
-     he[entry] = k;
-     auto fl = dladdr((const void*)(entry.native_handle()),&dlinfo);
-     if (entry.native_handle() && fl && dlinfo.dli_fname && dlinfo.dli_sname) { 
-       auto name = demangle(dlinfo.dli_sname);
-       std::cout << n << " d " << name << ' ' << dlinfo.dli_sname  << ' ' << dlinfo.dli_fname << std::endl;
-       std::free(name);
-     }
-     else std::cout << n << " n " << entry.description() << '\n';
-     n++;
-   }
-   */
    int nf=0;
    for (auto p=st.begin(); p!=st.end(); ++p) nf++;
    int nb=0;
-   for (auto p=st.rbegin(); p!=st.rend(); ++p)  std::cout << nb++ << ' ' << (*p).description() << '\n';
+   for (auto p=st.rbegin(); p!=st.rend(); ++p)  std::cout << '#' << nb++ << ' ' << (void*)((*p).native_handle()) << ' ' << (*p).description() << ' ' << (*p).source_file() << ':' << (*p).source_line() << '\n';
    std::cout << "st size " << st.size() << ' ' << n << ' ' << nf << ' ' << nb << '\n' << std::endl;
 #else
     std::cout << boost::stacktrace::stacktrace()  << '\n';
 #endif
-    return c + 1;
+    return k ? c + 1 : 0;
 }
+__attribute__ ((noinline))
+// inline
 int nested_func(int c)
 {
+    asm volatile("");
     return nested_func2(c + 1);
 }
 #else
 int nested_func(int c);
 #endif
 #ifdef INMAIN
+// int func(int b) __attribute__((noinline));
+inline
 int func(int b)
 {
     return nested_func(b + 1);
