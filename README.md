@@ -23,6 +23,21 @@ invoke the application to profile and filter the profile using ```grep _mptrace`
 
 drop the resulting file in speedscope (or genarate a flamegraph svg)
 
+## Example
+
+go in the demos directory and run the trivial python example (taken from a numpy tutorial)
+```
+export LD_PRELOAD=../mallocProfiler.so
+python3 demo.py | grep _mpTrace | cut -f1,3 -d'$' | tr '$' ' ' > & pyDemo.md
+```
+drop the resulting file (pyDemo.md) in https://www.speedscope.app
+
+selecet the _sandwitch_ view, sort by total, click on ```file_rules``` and one should get an output like this one showing the typical huge call stacks of python
+
+<img width="1734" alt="image" src="https://github.com/VinInn/MallocProfiler/assets/4143702/a18fe3e3-c6a2-4c4b-ae78-3247e55d17f3">
+
+
+
 
 
 
