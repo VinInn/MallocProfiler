@@ -37,6 +37,28 @@ selecet the _sandwich_ view, sort by total, click on ```file_rules``` and one sh
 <img width="1734" alt="image" src="https://github.com/VinInn/MallocProfiler/assets/4143702/a18fe3e3-c6a2-4c4b-ae78-3247e55d17f3">
 
 
+## instrumenting user code
+
+demos/instrumentationDemo.cpp contains a simple examaple of how to instrument user code: it is supposed to track and report all allocation performed while filling a hash-map (std::unordered_map)
+
+compile it with
+```
+c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo
+```
+
+preload the profiler disabled  by default and run it
+```
+export LD_PRELOAD=../mallocProfilerOFF.so
+../instrumentationDemo
+```
+
+compile it again activating the ```reserve``` call
+```
+c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo -DRESERVE
+```
+
+and compare the two outputs
+
 
 
 
