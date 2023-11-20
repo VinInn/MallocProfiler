@@ -14,6 +14,7 @@
 */
 
 
+inline
 int instrumentedFunc(int c) {
   int nb=0;
   auto st = std::stacktrace::current();
