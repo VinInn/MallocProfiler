@@ -46,13 +46,13 @@ compile it with
 c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo
 ```
 
-preload the profiler by default disabled and run it
+preload the profiler disabled  by default and run it
 ```
 export LD_PRELOAD=../mallocProfilerOFF.so
 ../instrumentationDemo
 ```
 
-compile it again activating the ```reserve call``
+compile it again activating the ```reserve``` call
 ```
 c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo -DRESERVE
 ```
