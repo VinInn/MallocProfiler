@@ -7,28 +7,12 @@
 #include <iostream>
 
 
+/*
 #ifndef INLINE
 #define INLINE __attribute__ ((noinline))
 #endif
+*/
 
-
-INLINE
-int nestedFunc2(int c);
-INLINE
-int nestedFunc(int c);
-inline
-int instrumentedFunc(int c);
-
-
-
-int nestedFunc2(int c) {
-  return instrumentedFunc(c+1);
-}
-
-
-int nestedFunc(int c) {
-  return nestedFunc2(c+1);
-}
 
 int instrumentedFunc(int c) {
   int nb=0;
@@ -37,6 +21,17 @@ int instrumentedFunc(int c) {
 
   return c + nb;;
 }
+
+__attribute__((optimize("no-optimize-sibling-calls")))
+int nestedFunc2(int c) {
+  return instrumentedFunc(c+1);
+}
+
+[[gnu::optimize("no-optimize-sibling-calls")]]
+int nestedFunc(int c) {
+  return nestedFunc2(c+1);
+}
+
 
 // INLINE
 inline

@@ -1,5 +1,5 @@
-// compile with c++ -g instrumentationDemo,cpp ../dummyMallocProfiler.so -o instrumentationDemo
-// or compile with c++ -g instrumentationDemo,cpp ../dummyMallocProfiler.so -o instrumentationDemo -DRESERVE
+// compile with c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo
+// or compile with c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo -DRESERVE
 //
 #include "../include/mallocProfiler.h"
 #include <unordered_map>
