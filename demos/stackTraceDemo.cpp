@@ -36,20 +36,25 @@ namespace {
   init()
   {
     static __glibcxx_backtrace_state* state
-      = __glibcxx_backtrace_create_state(nullptr, 1, err_handler, nullptr);
+      = __glibcxx_backtrace_create_state(nullptr, 5, err_handler, nullptr);
     return state;
   }
 }
 
+
+int n=0;
+
 void printFull(uint64_t pc) {
   auto cb = [](void* self, uintptr_t, const char* filename, int lineno,
                const char* function) -> int {
+   n++;
    if (function!=nullptr) {
-     std::cout << ">>  " << function << ' ' << filename << ':' << lineno << std::endl;
+     std::cout << ">> " << n << ' ' << function << ' ' << filename << ':' << lineno << std::endl;
    }
-   return function!=nullptr;
+   return false; // function!=nullptr;
   };
   const auto state = init();
+  n = 0;
   ::__glibcxx_backtrace_pcinfo(state, pc, +cb, err_handler, nullptr);
 }
 
