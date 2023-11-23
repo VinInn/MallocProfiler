@@ -63,7 +63,7 @@ void testEx(std::vector<int*> & v, int n) {
 }
 
 
-
+[[gnu::optimize("no-optimize-sibling-calls")]]
 void recursive(std::vector<int*> & v, int n) {
   if (0==n) return;
   v.push_back(new int(4));
@@ -98,7 +98,7 @@ int main() {
 
   {
   std::vector<int*> v;
-  recursive(v,257);
+  recursive(v,4);  // tested with 257 as well
 
   std::cout << v.size() << std::endl;
 

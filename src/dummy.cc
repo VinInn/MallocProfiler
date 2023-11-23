@@ -25,6 +25,6 @@ namespace mallocProfiler {
    std::ostream &  dump(std::ostream & out, char, SortBy, bool) { return out;}
    std::ostream &  dumpDetails(std::ostream & out, std::string const &, bool) { return out;}
 
-   void setDumpingInterval(std::chrono::seconds const &, std::chrono::minutes const &) {}
+   void setDumpingInterval(std::chrono::seconds const &, std::chrono::seconds const &) {}
 
 }

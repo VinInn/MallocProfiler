@@ -11,13 +11,13 @@
 namespace {
 
   std::chrono::seconds summaryInterval(10);
-  std::chrono::minutes dumpInterval(10);
+  std::chrono::seconds dumpInterval(10*60);
 }
 
 
 namespace mallocProfiler {
 
-  void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::minutes const & dumpLap) {
+  void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::seconds const & dumpLap) {
       summaryInterval = summaryLap;
       dumpInterval = dumpLap;
   }

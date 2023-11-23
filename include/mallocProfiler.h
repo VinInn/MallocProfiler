@@ -63,6 +63,6 @@ namespace mallocProfiler {
    
    std::ostream &  dumpDetails(std::ostream &, std::string const & from, bool allThreads=true);
 
-   void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::minutes const & dumpLap);
+   void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::seconds const & dumpLap);
 
 }

@@ -114,6 +114,8 @@ namespace {
       if (!name.empty()) trace += name + ';';
       if (truncate) break;
      }
+     // remove last semicolumn
+     if (!trace.empty()) trace.erase(trace.size()-1,1);
      return trace;
   }
 
@@ -217,7 +219,7 @@ struct  Me {
        out << "_mpTrace_;" << print_stacktrace(e.first) << ' ' << sep << e.second.ntot << sep << e.second.mtot << sep << e.second.mlive << sep << e.second.mmax << '\n';
      }
      auto &  e = smallAlloc;
-     out << "_mpTrace_;SmallAllocations " << sep << e.ntot << sep << e.mtot << sep << e.mlive << sep << e.mmax << '\n';
+     out << "_mpTrace_;" << (invertThreshold  ? "Large" :  "Small")  << "Allocations " << sep << e.ntot << sep << e.mtot << sep << e.mlive << sep << e.mmax << '\n';
      return out;
   }
 
