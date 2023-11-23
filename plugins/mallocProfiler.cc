@@ -55,7 +55,6 @@ namespace mallocProfiler {
 
 
    static_assert(sizeof(AtomicStat)==sizeof(Stat),"atomic size not the same");
-
 }
 
 namespace {
@@ -81,7 +80,9 @@ namespace {
   Mutex globalLock;
 
   
-  bool remangle(std::string & name) {
+
+  
+  bool defaultRemangle(std::string & name) {
     std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
     std::string fakeSym[] = {"regex","TFormula","TClass","TCling","cling","clang","llvm","spirit"};
     // remove signature
@@ -98,6 +99,12 @@ namespace {
     }
     return false;
   }
+
+  remangleType remangler = defaultRemangle;
+
+  bool remangle(std::string & name) {
+     return remangler ? remangler(name) : false;
+  } 
 
   std::string print_stacktrace(stacktrace const & st) {
      std::string trace;
@@ -543,6 +550,12 @@ namespace mallocProfiler {
 
    void setThreshold(std::size_t value, bool reverse){ threshold = value; invertThreshold = reverse;}
    std::size_t getThreshold() { return threshold;}
+
+
+  void setRemangler(remangleType f){remangler = f;}
+  remangleType getDefaultRemangler(){return defaultRemangle;}
+  remangleType getCurrentRemangler(){return remangler;}
+
 
    void noFinalDump(){ doFinalDump=false;}
 

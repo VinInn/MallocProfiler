@@ -34,6 +34,7 @@ namespace mallocProfiler {
 
   };
 
+  typedef bool (*remangleType)(std::string & name);
 
    constexpr bool allThreads=true;
    constexpr bool currentThread=false;
@@ -64,5 +65,10 @@ namespace mallocProfiler {
    std::ostream &  dumpDetails(std::ostream &, std::string const & from, bool allThreads=true);
 
    void setDumpingInterval(std::chrono::seconds const & summaryLap, std::chrono::seconds const & dumpLap);
+
+
+  void setRemangler(remangleType);
+  remangleType getDefaultRemangler();
+  remangleType getCurrentRemangler();
 
 }

@@ -13,6 +13,10 @@ namespace mallocProfiler {
    void deactivate(bool) {}
    void setThreshold(std::size_t,bool){}
 
+  void setRemangler(remangleType){}
+  remangleType getDefaultRemangler(){return nullptr;}
+  remangleType getCurrentRemangler(){return nullptr;}
+
    void setVerbose(bool){}
    std::size_t getThreshold() { return 0;}
 

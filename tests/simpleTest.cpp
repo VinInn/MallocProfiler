@@ -131,7 +131,7 @@ int main() {
   mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max,  mallocProfiler::allThreads);
   std::cout << "===                ===" << std::endl;
 
-
+  mallocProfiler::setRemangler(nullptr);
   printf("THIS IS THE END\n");
   fflush(stdout);
 
