@@ -15,6 +15,7 @@ std::atomic<double> dummy = 0;
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <cassert>
 
   typedef std::thread Thread;
   typedef std::vector<std::thread> ThreadGroup;
@@ -101,10 +102,23 @@ int main() {
   std::cout <<  "stress delete "  << std::endl;
   nt=0;
   for (int i=0; i<2049; ++i) {
-    Thread t([&](int k){if (flag) delete vvv[k]; nt++;},i);
+    Thread t([&](int k){if (flag) delete [] vvv[k]; nt++;},i);
     t.detach();
   }
   while (nt<2049)  std::this_thread::yield();
+
+
+  std::cout << "openmp" << std::endl;
+  int * p[100];
+  #pragma omp parallel for
+  for (int i=0; i<100; i++) p[i] = new int[256];
+
+ #pragma omp parallel for
+  for (int i=0; i<100; i++) assert(p[i]);
+
+  #pragma omp parallel for
+  for (int i=0; i<100; i++) delete [] p[i];
+
 
   std::cout << "=== Global Profile ===" << std::endl;
   mallocProfiler::dump(std::cout, ' ', mallocProfiler::SortBy::max,  mallocProfiler::allThreads);
