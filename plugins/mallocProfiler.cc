@@ -67,12 +67,11 @@ namespace {
   typedef std::unique_lock<std::mutex> Lock;
 
 #ifdef MALLOC_PROFILER_OFF
-  bool globalActive = false;
   bool defaultActive = false;
 #else
-  bool globalActive = true;
   bool defaultActive = true;
 #endif
+  bool globalActive = false;
   bool beVerbose = false;
   bool doFinalThreadDump = false;
   bool doFinalDump = true;
@@ -367,18 +366,24 @@ struct  Me {
 
   struct Banner {
     Banner() {
+      assert(!globalActive);
+      inMalloc = true;
       setenv("LD_PRELOAD","", true);
       printf("malloc wrapper loading\n");
+      ad = Me::us().size();
       fflush(stdout);
+      globalActive = defaultActive;
+      inMalloc = false;
     }
     ~Banner() {
       globalActive = false;
       inMalloc = true;
-      std::cout << "MemStat Global Summary for " << getpid() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
+      std::cout << "MemStat Global Summary for " << getpid() << "/"  << Me::us().size() << ": " << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
       if (doFinalDump) Me::globalDump(std::cout, '$', SortBy::max);
       globalActive = false;
       inMalloc = true;  // make sure we are not called again..
     }
+    int ad;
   };
 
   Banner banner;
