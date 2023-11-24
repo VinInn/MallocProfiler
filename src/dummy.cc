@@ -11,6 +11,7 @@ namespace mallocProfiler {
    void activate(bool){}
    void disable () {}
    void deactivate(bool) {}
+   void clear(bool){}
    void setThreshold(std::size_t,bool){}
 
   void setRemangler(remangleType){}

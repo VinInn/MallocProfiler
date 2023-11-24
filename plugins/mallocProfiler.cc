@@ -262,6 +262,17 @@ struct  Me {
      return out;
    }
 
+  void clear() {
+    Lock guard(lock);
+    auto previous = doRecording;
+    doRecording = false;
+    Stat zero;
+    smallAllocations = zero;
+    stat = zero;
+    memMap.clear();
+    calls.clear();
+    doRecording = previous;
+  }
 
   mutable Mutex lock;
   std::unordered_map<void*,std::pair<uint64_t,One*>> memMap; // active memory blocks 
@@ -547,6 +558,8 @@ namespace mallocProfiler {
    void activate(bool allThreads) {
      if (allThreads) {
        defaultActive = true;
+       Lock guard(globalLock);
+       for (auto & e : Me::us()) e->doRecording=true;
      } else {
       Me::me().doRecording = true;
     }
@@ -555,9 +568,25 @@ namespace mallocProfiler {
    void deactivate(bool allThreads) {
      if (allThreads) {
        defaultActive = false;
+       Lock guard(globalLock);
+       for (auto & e : Me::us()) e->doRecording=false;
      } else {
       Me::me().doRecording = false;
     }
+   }
+
+   void clear(bool allThreads) {
+     auto previous = globalActive;
+     globalActive = false;
+     if (allThreads) {
+        Stat zero;
+        memcpy(&globalStat,&zero,sizeof(Stat));
+        Lock guard(globalLock);
+        for (auto & e : Me::us()) e->clear();
+      } else {
+       if (tlme)  Me::me().clear();
+     }
+     globalActive = previous;
    }
 
    void setThreshold(std::size_t value, bool reverse){ threshold = value; invertThreshold = reverse;}

@@ -4,7 +4,7 @@ c++ -std=c++23 -O -shared -fPIC chain.cc -DALIB -o libA.so libB.so -Wl,-rpath=. 
 c++ -std=c++23 -O3 simpleTest.cpp ../dummyMallocProfiler.so -o simpleTest  libA.so -g  -Wl,-rpath=.
 c++ -std=c++23 -O3 simpleTest.cpp ../mallocProfiler.o ../dummyMallocProfiler.so -o simpleTestInstrumented -lstdc++exp -ldl libA.so -g -Wl,-rpath=.
 
-c++ -std=c++23 -O3 mtTest.cpp ../dummyMallocProfiler.so -o mtTest -pthread
+c++ -std=c++23 -O3 mtTest.cpp ../dummyMallocProfiler.so -o mtTest -pthread -fopenmp
 
 c++ -std=c++23 -O3 simpleTest.cpp ../dummyMallocProfiler.so -o simpleTestS  -DSLEEP libA.so -g  -Wl,-rpath=.
 

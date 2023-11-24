@@ -48,6 +48,7 @@ namespace mallocProfiler {
    void disable ();
    void activate(bool allThreads=true);
    void deactivate(bool allThreads=true);
+   void clear(bool allThreads=true);
 
    void setThreshold(std::size_t value, bool reverse=false);
    std::size_t getThreshold();

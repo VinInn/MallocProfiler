@@ -28,7 +28,7 @@ std::atomic<double> dummy = 0;
  
 
 template<typename T, int mode>
-void go(int size) {
+void go(int size, int id) {
 
   std::cout << "thread wait" << std::endl;
   nt++;
@@ -41,12 +41,17 @@ void go(int size) {
   for (int i=0; i<size; ++i)
     v.push_back(T(i));
 
+   if (5==id)  mallocProfiler::clear(mallocProfiler::currentThread);
+
+  for (int i=0; i<size; ++i)
+    v.push_back(T(i));
+
   dummy +=v[5];
 
   std::ostringstream out;
-  // the buffer will be allocated but not tracked, the frwill ... 
+  // the buffer will be allocated but not tracked, the free will ... 
   mallocProfiler::dump(out, ' ', mallocProfiler::SortBy::max, mallocProfiler::currentThread);
-  {Lock(outlock); std::cout << out.str() << std::endl;}
+  {Lock a(outLock); std::cout << id << ":\n" << out.str() << std::endl;}
 
 }
 
@@ -83,7 +88,7 @@ int main() {
   threads.reserve(NTHREADS);
   nt=0;
   for (int i=0; i<NTHREADS; ++i) {
-    threads.emplace_back(go<int,0>,1000);
+    threads.emplace_back(go<int,0>,1000,i);
   }
   while (nt<NTHREADS)  std::this_thread::yield();
   std::cout << "threads ready" << std::endl;
