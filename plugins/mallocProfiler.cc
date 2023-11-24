@@ -68,8 +68,10 @@ namespace {
 
 #ifdef MALLOC_PROFILER_OFF
   bool globalActive = false;
+  bool defaultActive = false;
 #else
   bool globalActive = true;
+  bool defaultActive = true;
 #endif
   bool beVerbose = false;
   bool doFinalThreadDump = false;
@@ -79,9 +81,9 @@ namespace {
 
   Mutex globalLock;
 
-  
+  thread_local bool inMalloc = false;
 
-  
+
   bool defaultRemangle(std::string & name) {
     std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
     std::string fakeSym[] = {"regex","TFormula","TClass","TCling","cling","clang","llvm","spirit"};
@@ -136,12 +138,6 @@ namespace {
   }
 
 
-#ifdef MALLOC_PROFILER_OFF
-  thread_local bool doRecording = false;
-#else 
-  thread_local bool doRecording = true; 
-#endif
-
   std::size_t threshold = 128; // 1024;
   bool invertThreshold = false;
 
@@ -173,12 +169,16 @@ struct  Me {
 
   void add(void * p, std::size_t size) {
     Lock guard(lock);
+    // if we are here better doRecording be true
+    assert(doRecording);
+    doRecording = false;
     stat.add(size);
     bool cond = invertThreshold ? size > threshold : size < threshold;
     auto & e = cond ? smallAllocations : calls[get_stacktrace()];
     memMap[p] = std::make_pair(size, &e);
     e.add(size);
     globalStat.add(size);
+    doRecording = true;
   }
 
   bool sub(void * p)  {
@@ -270,6 +270,7 @@ struct  Me {
   One smallAllocations; 
   One stat;
   int64_t index=-1;
+  bool doRecording = defaultActive;
 
   static Us & us() {
    static Us us;
@@ -286,8 +287,7 @@ struct  Me {
   static std::ostream & globalDump(std::ostream & out, char sep, SortBy sortMode) {
     // merge all stacktrace
     if (us().empty()) return out;
-    auto previous = doRecording;
-    doRecording = false;
+    inMalloc = true; // just avoid it...
     {
     TraceMap calls;
     One smallAlloc;
@@ -301,7 +301,7 @@ struct  Me {
     Mutex alock; // no need to lock
     dump(out, sep, sortMode, calls, smallAlloc, alock);
     }
-    doRecording = previous;
+    inMalloc = false;
     return out;
   }
 
@@ -317,7 +317,6 @@ struct  Me {
 
   Me & Me::me() {
     if (tlme)  return *tlme;
-
     auto l = std::make_unique<Me>();
     tlme = l.get();
     {
@@ -327,6 +326,13 @@ struct  Me {
     }
     return *tlme;
   }
+
+
+  bool isActive() {
+    return globalActive && (!inMalloc) &&
+    (tlme ? tlme->doRecording : defaultActive);
+  }
+
 
   void Me::globalSub(void * p)  {
     if (!p) return;
@@ -366,11 +372,12 @@ struct  Me {
       fflush(stdout);
     }
     ~Banner() {
-      auto previous = globalActive;
       globalActive = false;
+      inMalloc = true;
       std::cout << "MemStat Global Summary for " << getpid() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
       if (doFinalDump) Me::globalDump(std::cout, '$', SortBy::max);
-      globalActive = previous;
+      globalActive = false;
+      inMalloc = true;  // make sure we are not called again..
     }
   };
 
@@ -384,10 +391,10 @@ extern "C"
 
 void *dlopen(const char *filename, int flags) {
   if (!origDL) origDL = (dlopenSym)dlsym(RTLD_NEXT,"dlopen");
-  auto previous = doRecording;
-  doRecording = false;
+  auto previous = globalActive;
+  globalActive = false;
   auto p  = origDL(filename,flags);
-  doRecording = previous;
+  globalActive = previous;
   return p;
 }
 
@@ -396,10 +403,10 @@ void *malloc(std::size_t size) {
   if (!origM) origM = (mallocSym)dlsym(RTLD_NEXT,"malloc");
   assert(origM);
   auto p  = origM(size); 
-  if (globalActive&&doRecording) {
-    doRecording = false;
+  if (isActive()) {
+    inMalloc = true;
     Me::me().add(p, size);
-    doRecording = true;
+    inMalloc = false;
   }
   return p;
 }
@@ -410,10 +417,10 @@ void *aligned_alloc(std::size_t alignment, std::size_t size ) {
   if (!origA) origA = (callocSym)dlsym(RTLD_NEXT,"aligned_alloc");
   assert(origA);
   auto p  = origA(alignment, size);
-  if (globalActive&&doRecording) {
-    doRecording = false;
+  if (isActive()) {
+    inMalloc = true;
     Me::me().add(p, size);
-    doRecording = true;
+    inMalloc = false;
   }
   return p;
 }
@@ -423,10 +430,10 @@ void *calloc(std::size_t count, std::size_t size ) {
   if (!origC) origC = (callocSym)dlsym(RTLD_NEXT,"calloc");
   assert(origC);
   auto p  = origC(count, size);
-  if (globalActive&&doRecording) {
-    doRecording = false;
+  if (isActive()) {
+    inMalloc = true;
     Me::me().add(p, count*size);
-    doRecording = true;
+    inMalloc = false;
   }
   return p;
 }
@@ -458,10 +465,10 @@ void *realloc(void *ptr, std::size_t size) {
 void free(void *ptr) {
   if(!origF) origF = (freeSym)dlsym(RTLD_NEXT,"free");
   assert(origF);
-  if (globalActive&&doRecording) {
-    doRecording = false;
+  if (globalActive && !inMalloc) {
+    inMalloc = true;
     if((!tlme) || (!Me::me().sub(ptr)) ) Me::globalSub(ptr);
-    doRecording = true;
+    inMalloc = false;
   }
   origF(ptr);
 }
@@ -526,7 +533,7 @@ namespace mallocProfiler {
 
    bool loaded() {return true;}
 
-   bool active(bool allThreads) { return allThreads ? globalActive : doRecording;}
+   bool active(bool allThreads) { return allThreads ? globalActive : Me::me().doRecording;}
    bool enabled () { return globalActive;}
 
    void enable () { globalActive = true;}
@@ -534,17 +541,17 @@ namespace mallocProfiler {
 
    void activate(bool allThreads) {
      if (allThreads) {
-       globalActive = true;
+       defaultActive = true;
      } else {
-      doRecording = true;
+      Me::me().doRecording = true;
     }
    }
    
    void deactivate(bool allThreads) {
      if (allThreads) {
-       globalActive = false;
+       defaultActive = false;
      } else {
-      doRecording = false;
+      Me::me().doRecording = false;
     }
    }
 
@@ -572,20 +579,20 @@ namespace mallocProfiler {
     } 
 
    std::ostream &  dump(std::ostream & out, char sep, SortBy mode, bool allThreads) {
-      auto previous = doRecording;
-      doRecording = false;
+      auto previous = Me::me().doRecording;
+      Me::me().doRecording = false;
       if (allThreads) Me::globalDump(out,sep,mode);
       else if(tlme) Me::me().dump(out, sep, SortBy::max);
-      doRecording = previous;
+      Me::me().doRecording = previous;
       return out;
    }
 
    std::ostream & dumpDetails(std::ostream & out, std::string const & from, bool allThreads) {
-      auto previous = doRecording;
-      doRecording = false;
+      auto previous = Me::me().doRecording;
+      Me::me().doRecording = false;
       if (allThreads) Me::globalDetails(out,from);
       else if(tlme) Me::me().details(out, from);
-      doRecording = previous;
+      Me::me().doRecording = previous;
       return out;
    }
 
