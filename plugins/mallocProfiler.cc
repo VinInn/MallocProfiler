@@ -2,7 +2,7 @@
 //  c++ -O3 -pthread -fPIC -shared -std=c++23 plugins/mallocProfiler.cc -lstdc++exp -o mallocProfiler.so -ldl -Iinclude
 
 #include "mallocProfiler.h"
-#include "argumentRemover.h"
+#include "utilities.h"
 
 #include <cstdint>
 #include <dlfcn.h>
@@ -84,17 +84,15 @@ namespace {
 
 
   bool defaultRemangle(std::string & name) {
-    std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
-    std::string fakeSym[] = {"regex","TFormula","TClass","TCling","cling","clang","llvm","spirit"};
+    const std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
+    const std::string fakeSym[] = {"regex","TFormula","TClass","TCling","cling","clang","llvm","spirit"}; 
     // remove signature
-    auto last = std::string::npos;
-    last = name.rfind('(');
-    name = name.substr(0,last);
+    removeSignature(name);
     // remove alloctor
     removeTemplate(name,"std::allocator");
     // truncate if spirit, cling, Clang, std::regex etc
     int i=0;
-    for (auto & s : doTrucate) {
+    for (auto const & s : doTrucate) {
       if (name.find(s)!=std::string::npos) { name = fakeSym[i]; return true;}
       ++i;
     }

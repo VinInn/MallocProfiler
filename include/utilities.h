@@ -2,7 +2,10 @@
 
 #include<string>
 
+
+namespace mallocProfiler {
 // find the closing ">" in string s starting at position pos
+inline
 size_t identifyArgument(std::string const & s, size_t pos) {
   // find first
   for (;pos<s.size(); ++pos) {
@@ -35,3 +38,14 @@ void removeTemplate(std::string & s, std::string const & Sym)  {
     if (!argumentRemover(s,p)) return;
   }
 }
+
+// remove signature (s is a symbol so signature is the last piece)
+inline
+void  removeSignature(std::string & s) {
+  auto last = std::string::npos;
+  last = s.rfind('(');
+  s = s.substr(0,last);
+}
+
+
+} // namespace
