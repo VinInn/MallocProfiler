@@ -554,6 +554,8 @@ namespace mallocProfiler {
    void disable () { globalActive = false;}
 
    void activate(bool allThreads) {
+     auto previous = globalActive;
+     globalActive = false;
      if (allThreads) {
        defaultActive = true;
        Lock guard(globalLock);
@@ -561,9 +563,12 @@ namespace mallocProfiler {
      } else {
       Me::me().doRecording = true;
     }
+    globalActive = previous;
    }
-   
+
    void deactivate(bool allThreads) {
+     auto previous = globalActive;
+     globalActive = false;
      if (allThreads) {
        defaultActive = false;
        Lock guard(globalLock);
@@ -571,6 +576,7 @@ namespace mallocProfiler {
      } else {
       Me::me().doRecording = false;
     }
+    globalActive = previous;
    }
 
    void clear(bool allThreads) {
