@@ -8,3 +8,4 @@ c++ -std=c++23 -O3 mtTest.cpp ../dummyMallocProfiler.so -o mtTest -pthread -fope
 
 c++ -std=c++23 -O3 simpleTest.cpp ../dummyMallocProfiler.so -o simpleTestS  -DSLEEP libA.so -g  -Wl,-rpath=.
 
+c++ -std=c++23 -O3 -shared -fPIC -shared testConfiguration.cc ../dummyMallocProfiler.so -o testConfiguration.so -Wl,-rpath=.
