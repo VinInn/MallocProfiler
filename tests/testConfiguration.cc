@@ -20,7 +20,7 @@ namespace {
     auto cb = [](std::string & s) -> bool { 
        return false; // do not truncate
     };
-    setRemangler(+cb);
+    setRemangler(cb);
     // set threshold to zero
     setThreshold(0);
     // inhibit the final dump
