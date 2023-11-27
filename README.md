@@ -66,7 +66,7 @@ The user API, to configure the profiler and to instrument the code, is all in th
 and is documented inline.
 
 A simple mechianism to confugure the profiler w/o instrumenting the code is to introduce a _middle-library_ to be preloaded after the profiler itself.
-
+An example can be found in tests/testConfiguration.cc
 
 
 
