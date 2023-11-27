@@ -37,9 +37,9 @@ selecet the _sandwich_ view, sort by total, click on ```file_rules``` and one sh
 <img width="1734" alt="image" src="https://github.com/VinInn/MallocProfiler/assets/4143702/a18fe3e3-c6a2-4c4b-ae78-3247e55d17f3">
 
 
-## instrumenting user code
+## Instrumenting user code
 
-demos/instrumentationDemo.cpp contains a simple examaple of how to instrument user code: it is supposed to track and report all allocation performed while filling a hash-map (std::unordered_map)
+demos/instrumentationDemo.cpp contains a simple examaple of how to instrument user code: it is supposed to track and report all allocations performed while filling a hash-map (std::unordered_map)
 
 compile it with
 ```
@@ -58,6 +58,14 @@ c++ -g instrumentationDemo.cpp ../dummyMallocProfiler.so -o instrumentationDemo 
 ```
 
 and compare the two outputs
+
+
+##  User API
+
+The user API, to configure the profiler and to instrument the code, is all in the header file include/mallocProfiler.h
+and is documented inline.
+
+A simple mechianism to confugure the profiler w/o instrumenting the code is to introduce a _middle-library_ to be preloaded after the profiler itself.
 
 
 
