@@ -11,6 +11,7 @@
 #include<cassert>
 #include <unordered_map>
 #include<map>
+#include<array>
 #include<vector>
 #include<algorithm>
 #include <memory>
@@ -55,6 +56,7 @@ namespace mallocProfiler {
 
 
    static_assert(sizeof(AtomicStat)==sizeof(Stat),"atomic size not the same");
+
 }
 
 namespace {
@@ -82,6 +84,8 @@ namespace {
 
   thread_local bool inMalloc = false;
 
+  std::array<std::atomic<uint64_t>,64> memTotHist;
+  std::array<std::atomic<uint64_t>,64> memLiveHist;
 
   bool defaultRemangle(std::string & name) {
     const std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
@@ -175,6 +179,9 @@ struct  Me {
     memMap[p] = std::make_pair(size, &e);
     e.add(size);
     globalStat.add(size);
+    auto bin = 64 - __builtin_clzll(size);
+    ++memTotHist[bin];
+    ++memLiveHist[bin];
     doRecording = true;
   }
 
@@ -183,9 +190,12 @@ struct  Me {
     Lock guard(lock);
     // std::cout << "f " << p << std::endl;
     if (auto search = memMap.find(p); search != memMap.end()) {
-     stat.sub(search->second.first);
-     search->second.second->sub(search->second.first);
-     globalStat.sub(search->second.first);
+     auto size = search->second.first;
+     stat.sub(size);
+     search->second.second->sub(size);
+     globalStat.sub(size);
+     auto bin = 64 - __builtin_clzll(size);
+     --memLiveHist[bin];
      memMap.erase(p);
      return true;
     } 
@@ -377,8 +387,10 @@ struct  Me {
     Banner() {
       assert(!globalActive);
       inMalloc = true;
-      setenv("LD_PRELOAD","", true);
+      // setenv("LD_PRELOAD","", true);
       printf("malloc wrapper loading\n");
+      for (auto & e : memTotHist) e=0;
+      for (auto & e : memLiveHist) e=0;
       ad = Me::us().size();
       fflush(stdout);
       globalActive = defaultActive;
@@ -387,7 +399,17 @@ struct  Me {
     ~Banner() {
       globalActive = false;
       inMalloc = true;
+
       std::cout << "MemStat Global Summary for " << getpid() << "/"  << Me::us().size() << ": " << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
+
+      std::cout << "MemTot Global Hist for " << getpid() << "/"  << Me::us().size() << ": ";
+      for (auto & e : memTotHist) std::cout << e << ',';
+      std::cout << std::endl;
+
+      std::cout << "MemLive Global Hist for " << getpid() << "/"  << Me::us().size() << ": ";
+      for (auto & e : memLiveHist) std::cout << e << ',';
+      std::cout << std::endl;
+
       if (doFinalDump) Me::globalDump(std::cout, '$', SortBy::max);
       globalActive = false;
       inMalloc = true;  // make sure we are not called again..
@@ -585,6 +607,8 @@ namespace mallocProfiler {
      if (allThreads) {
         Stat zero;
         memcpy(&globalStat,&zero,sizeof(Stat));
+        for (auto & e : memTotHist) e=0;
+        for (auto & e : memLiveHist) e=0;
         Lock guard(globalLock);
         for (auto & e : Me::us()) e->clear();
       } else {
