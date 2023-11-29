@@ -26,6 +26,9 @@ namespace mallocProfiler {
    void noZeroLiveDump(bool){}
 
    Stat summary(bool) { return Stat();}
+   Hist memTotHistogram() { return Hist();}
+   Hist memLiveHistogram() { return Hist();}
+
 
    std::ostream &  dump(std::ostream & out, char, SortBy, bool) { return out;}
    std::ostream &  dumpDetails(std::ostream & out, std::string const &, bool) { return out;}

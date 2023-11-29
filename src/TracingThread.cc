@@ -39,8 +39,15 @@ namespace {
     while(run)  {
       std::this_thread::sleep_for(summaryInterval); 
       t+=summaryInterval;
-      auto globalStat = mallocProfiler::summary(true); 
+      auto globalStat = mallocProfiler::summary(true);
+      auto memTotHist = mallocProfiler::memTotHistogram(); 
+      auto memLiveHist = mallocProfiler::memLiveHistogram();
       out << "MemStat Global Summary " << t.count() << ": "  << globalStat.ntot << ' ' << globalStat.mtot << ' ' << globalStat.mlive << ' ' << globalStat.mmax << std::endl;
+      out << "MemTot Global Hist ";
+      for (auto & e : memTotHist) out << e << ',';
+      out << "\nMemLive Global Hist ";
+      for (auto & e : memLiveHist) out << e << ',';
+      out << std::endl;
    }
    out.close();
   }

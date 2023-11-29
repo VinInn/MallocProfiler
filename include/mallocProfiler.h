@@ -34,6 +34,8 @@ namespace mallocProfiler {
 
   };
 
+  using Hist = std::array<uint64_t,64>;
+
   typedef bool (*remangleType)(std::string & name);
 
    constexpr bool allThreads=true;
@@ -67,6 +69,12 @@ namespace mallocProfiler {
    void setVerbose(bool isVerbose);
    // return the statistics  for the current thread or for all threads (depending on the argument)
    Stat summary(bool allThreads=true);
+
+   // return the histogram for memtot
+   Hist memTotHistogram();
+
+   // return the histogram for memlive
+   Hist memLiveHistogram();
 
    // disable the dump at the end of the process 
    void noFinalDump();

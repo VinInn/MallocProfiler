@@ -86,6 +86,7 @@ namespace {
 
   std::array<std::atomic<uint64_t>,64> memTotHist;
   std::array<std::atomic<uint64_t>,64> memLiveHist;
+  static_assert(sizeof(std::array<std::atomic<uint64_t>,64>)==sizeof(Hist),"atomic size not the same");
 
   bool defaultRemangle(std::string & name) {
     const std::string doTrucate[] = {"__cxx11::basic_regex","TFormula","TClass","TCling","cling::","clang","llvm::","boost::spirit"};
@@ -639,6 +640,19 @@ namespace mallocProfiler {
      memcpy(&ret,&globalStat,sizeof(Stat));
      return ret;
     } 
+
+
+   Hist memTotHistogram() { 
+     Hist ret;
+     memcpy(&ret,&memTotHist,sizeof(Hist));
+     return ret;
+   }
+   Hist memLiveHistogram() {
+     Hist ret;
+     memcpy(&ret,&memLiveHist,sizeof(Hist));
+     return ret;
+   }
+
 
    std::ostream &  dump(std::ostream & out, char sep, SortBy mode, bool allThreads) {
       auto previous = Me::me().doRecording;
