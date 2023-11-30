@@ -73,10 +73,15 @@ namespace {
       if (!mallocProfiler::loaded()) return;
       mallocProfiler::noFinalDump();
       mallocProfiler::noZeroLiveDump(true);
+#ifdef STAT_ONLY
+      mallocProfiler::setThreshold(0,true);
+#endif
       std::thread t(tracer);
       t.detach();
+#ifndef STAT_ONLY
       std::thread d(dumper);
       d.detach();
+#endif
     }
 
     ~Tracer() {
