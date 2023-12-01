@@ -23,7 +23,7 @@ invoke the application to profile and filter the profile using ```grep _mptrace`
 
 ```export LD_PRELOAD=""```
 
-drop the resulting file in speedscope (or genarate a flamegraph svg)
+drop the resulting file in speedscope (or generate a flamegraph svg)
 
 ### Example
 
@@ -34,14 +34,14 @@ python3 demo.py | grep _mpTrace | cut -f1,3 -d'$' | tr '$' ' ' > & pyDemo.md
 ```
 drop the resulting file (pyDemo.md) in https://www.speedscope.app
 
-selecet the _sandwich_ view, sort by total, click on ```file_rules``` and one should get an output like this one showing the typical huge call stacks of python
+select the _sandwich_ view, sort by total, click on ```file_rules``` and one should get an output like this one showing the typical huge call stacks of python
 
 <img width="1734" alt="image" src="https://github.com/VinInn/MallocProfiler/assets/4143702/a18fe3e3-c6a2-4c4b-ae78-3247e55d17f3">
 
 
 ## Instrumenting user code
 
-demos/instrumentationDemo.cpp contains a simple examaple of how to instrument user code: it is supposed to track and report all allocations performed while filling a hash-map (std::unordered_map)
+demos/instrumentationDemo.cpp contains a simple example of how to instrument user code: it is supposed to track and report all allocations performed while filling a hash-map (std::unordered_map)
 
 compile it with
 ```
@@ -67,13 +67,13 @@ and compare the two outputs
 The user API, to configure the profiler and to instrument the code, is all in the header file include/mallocProfiler.h
 and is documented inline.
 
-A simple mechianism to confugure the profiler w/o instrumenting the code is to introduce a _middle-library_ to be preloaded after the profiler itself.
+A simple mechanism to configure the profiler w/o instrumenting the code is to introduce a _middle-library_ to be preloaded after the profiler itself.
 An example can be found in tests/testConfiguration.cc
 
 ## Global Statistics
 It is easy to switch off detailed tracing and just accumulate global statistics. The ready to use _statOnlyThread.so_ library will start a thread that each 10 seconds will dump in a file (named ```memstat_PID.mdr```) three lines containing global statistics, the histogram of total memory and the one of live memory.
-This file can then be split in three csv-files with some trivial ```grep``` and ```sed```  and read using a visuallization tool. 
-Exemples of such files can be found in the demmos directory togehter with a ```jupyter``` notebook to visualize them in form of time-serie plots and histogram animations.
+This file can then be split in three csv-files with some trivial ```grep``` and ```sed```  and read using a visualization tool. 
+Exemples of such files can be found in the demos directory togehter with a ```jupyter``` notebook to visualize them in form of time-serie plots and histogram animations.
 
 
 
