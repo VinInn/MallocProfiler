@@ -5,6 +5,8 @@ It will trace location (stacktrace) and size of memory allocations (```malloc```
 The dump tries to reproduce the flamegraph input format (https://github.com/jlfwong/speedscope/wiki/Importing-from-custom-sources#brendan-greggs-collapsed-stack-format) accepted by speedscope as well.
 An API is provided to configure it and get reports on user request.
 
+Besides providing such a detailed map, the tool also accumulate statistics for both total-memory and live-memory in form of counters and histogram.
+
 ## Prerequisite
 GCC12 or newer. A version not older than Nov 15, 2023.
 configured with ```--enable-libstdcxx-backtrace=yes```.
@@ -67,6 +69,12 @@ and is documented inline.
 
 A simple mechianism to confugure the profiler w/o instrumenting the code is to introduce a _middle-library_ to be preloaded after the profiler itself.
 An example can be found in tests/testConfiguration.cc
+
+## Global Statistics
+It is easy to switch off detailed tracing and just accumulate global statistics. The ready to use _statOnlyThread.so_ library will start a thread that each 10 seconds will dump in a file (named ```memstat_PID.mdr```) three lines containing global statistics, the histogram of total memory and the one of live memory.
+This file can then be split in three csv-files with some trivial ```grep``` and ```sed```  and read using a visuallization tool. 
+Exemples of sich files can be found in the demmos directory togehter with a ```jupyter``` notebook to visualize them in form of time-serie plots and histogram animations.
+
 
 
 
