@@ -73,7 +73,7 @@ An example can be found in tests/testConfiguration.cc
 ## Global Statistics
 It is easy to switch off detailed tracing and just accumulate global statistics. The ready to use _statOnlyThread.so_ library will start a thread that each 10 seconds will dump in a file (named ```memstat_PID.mdr```) three lines containing global statistics, the histogram of total memory and the one of live memory.
 This file can then be split in three csv-files with some trivial ```grep``` and ```sed```  and read using a visuallization tool. 
-Exemples of sich files can be found in the demmos directory togehter with a ```jupyter``` notebook to visualize them in form of time-serie plots and histogram animations.
+Exemples of such files can be found in the demmos directory togehter with a ```jupyter``` notebook to visualize them in form of time-serie plots and histogram animations.
 
 
 
