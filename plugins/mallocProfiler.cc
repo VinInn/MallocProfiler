@@ -71,7 +71,7 @@ namespace {
 #ifdef MALLOC_PROFILER_OFF
   bool defaultActive = false;
 #else
-  bool defaultActive = true;
+  bool defaultActive = false;
 #endif
   bool globalActive = false;
   bool beVerbose = false;
@@ -82,7 +82,7 @@ namespace {
 
   Mutex globalLock;
 
-  thread_local bool inMalloc = false;
+  thread_local bool inMalloc = true;
 
   std::array<std::atomic<uint64_t>,64> memTotHist;
   std::array<std::atomic<uint64_t>,64> memLiveHist;
@@ -439,18 +439,21 @@ void *dlopen(const char *filename, int flags) {
 void *malloc(std::size_t size) {
   if (!origM) origM = (mallocSym)dlsym(RTLD_NEXT,"malloc");
   assert(origM);
-  auto p  = origM(size); 
+  auto p  = aligned_alloc(64,size); //   origM(size); 
+  /*
   if (isActive()) {
     inMalloc = true;
     Me::me().add(p, size);
     inMalloc = false;
   }
+  */
   return p;
 }
 
 
 
 void *aligned_alloc(std::size_t alignment, std::size_t size ) {
+  alignment = 64;
   if (!origA) origA = (callocSym)dlsym(RTLD_NEXT,"aligned_alloc");
   assert(origA);
   auto p  = origA(alignment, size);
