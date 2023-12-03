@@ -37,7 +37,9 @@ extern "C"
 
   void *aligned_alloc(std::size_t alignment, std::size_t size ) {
     c++;
-    alignment = 64;
+    if (alignment<64) alignment = 64;
+    // realign size
+    size = alignment*((size+alignment)/alignment);
     if (!origA) origA = (callocSym)dlsym(RTLD_NEXT,"aligned_alloc");
     assert(origA);
     // add leading and trailing guards (zeroed)
@@ -47,6 +49,14 @@ extern "C"
     return p+OFFSET;
   }
 
+  void *memalign(size_t alignment, size_t size) {
+    return aligned_alloc(alignment, size);
+  }
+
+ int posix_memalign(void **memptr, size_t alignment, size_t size) {
+   *memptr = aligned_alloc(alignment, size);
+   return 0;
+ }
 
   void *malloc(std::size_t size) {
     return  aligned_alloc(64,size);
@@ -78,6 +88,10 @@ extern "C"
     p =  (uint8_t *)origR(p,size+2*OFFSET);
     memset(p,0,OFFSET);
     return p+OFFSET;
+  }
+
+  void *reallocarray(void *ptr, size_t nmemb, size_t size) {
+    return realloc(ptr, nmemb*size);
   }
 
   void free(void *ptr) {
