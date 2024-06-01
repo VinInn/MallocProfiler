@@ -507,13 +507,13 @@ void *realloc(void *ptr, std::size_t size) {
 }
 */
 
-// bool doingUSI = false;
+bool doingUSI = false;
 
 // problem when called by "_dl_update_slotinfo"
 void free(void *ptr) {
   if(!origF) origF = (freeSym)dlsym(RTLD_NEXT,"free");
   assert(origF);
-  if (globalActive && !inMalloc) {
+  if (!doingUSI && globalActive && !inMalloc) {
     inMalloc = true;
     if((!tlme) || (!Me::me().sub(ptr)) ) Me::globalSub(ptr);
     inMalloc = false;
@@ -522,24 +522,23 @@ void free(void *ptr) {
 }
 
 
-/*
+
 // update_get_addr is garanteed not inlined
 // https://github.com/lattera/glibc/blob/master/elf/dl-tls.c#L797
-typedef struct link_map * (*USIsym)(struct tls_index *ti);
-USIsym origUSI = nullptr;
+typedef struct link_map * (*USI2sym)(struct tls_index *ti, size_t gen);
+USI2sym origUSI2 = nullptr;
 struct link_map *
-update_get_addr(struct tls_index *ti) {
-  if(!origUSI) origUSI = (USIsym)dlsym(RTLD_NEXT,"update_get_addr");
-  assert(origF);
+update_get_addr(struct tls_index *ti, size_t gen) {
+  if(!origUSI2) origUSI2 = (USI2sym)dlsym(RTLD_NEXT,"update_get_addr");
+  assert(origUSI2);
   doingUSI = true;
   bool previous = globalActive;
   globalActive = false;
-  auto p =  origUSI(ti);
+  auto p =  origUSI2(ti, gen);
   globalActive = previous;
   doingUSI = false;
   return p;
 }
-*/
 
 
 //
