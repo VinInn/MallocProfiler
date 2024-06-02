@@ -522,9 +522,25 @@ void free(void *ptr) {
 }
 
 
+typedef void* (*TGAsym)(struct tls_index *ti);
+TGAsym origTGA = nullptr;
+void *
+__tls_get_addr(struct tls_index *ti){
+  if(!origTGA) origTGA = (TGAsym)dlsym(RTLD_NEXT,"__tls_get_addr");
+  assert(origTGA);
+  doingUSI = true;
+  bool previous = globalActive;
+  globalActive = false;
+  auto p =  origTGA(ti);
+  globalActive = previous;
+  doingUSI = false;
+  return p;
+}
 
+
+/*
 // update_get_addr is garanteed not inlined
-// https://github.com/lattera/glibc/blob/master/elf/dl-tls.c#L797
+// but is NOT exported....
 typedef struct link_map * (*USI2sym)(struct tls_index *ti, size_t gen);
 USI2sym origUSI2 = nullptr;
 struct link_map *
@@ -539,6 +555,7 @@ update_get_addr(struct tls_index *ti, size_t gen) {
   doingUSI = false;
   return p;
 }
+*/
 
 
 //
